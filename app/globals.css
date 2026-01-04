@@ -1,0 +1,30 @@
+@import "tailwindcss";
+
+:root {
+  --background: #fdf2f7; /* Very light pink background */
+  --foreground: #5b1a1a; /* Dark maroon for text */
+}
+
+@theme inline {
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  
+  --color-brand-maroon: #5b1a1a;
+  --color-brand-pink: #f5ddeb;
+  --color-brand-beige: #e8d7bc;
+
+  --font-outfit: var(--font-outfit), ui-sans-serif, system-ui, sans-serif;
+  --font-cookie: var(--font-cookie), cursive;
+}
+
+body {
+  background: var(--background);
+  color: var(--foreground);
+  font-family: var(--font-outfit);
+}
+
+@layer utilities {
+  .font-cookie {
+    font-family: var(--font-cookie);
+  }
+}
