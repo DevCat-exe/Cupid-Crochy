@@ -56,8 +56,11 @@ export default function OrderTrackingPage() {
     setLoading(true);
     setError("");
     try {
-      const res = await fetch(`/api/orders/track/${orderId}`);
-      if (!res.ok) throw new Error("Order not found. Please check your ID.");
+      const res = await fetch(`/api/orders/track?q=${encodeURIComponent(orderId)}`);
+      if (!res.ok) {
+        const data = await res.json();
+        throw new Error(data.error || "Order not found. Please check your ID.");
+      }
       const data = await res.json();
       setOrder(data);
     } catch (err) {
@@ -207,7 +210,7 @@ export default function OrderTrackingPage() {
                       {order.items.map((item, idx) => (
                         <div key={idx} className="flex items-center space-x-4">
                           <div className="h-16 w-16 rounded-2xl overflow-hidden bg-brand-pink/10 shrink-0 border border-brand-maroon/5">
-                            <Image src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                            <Image src={item.image} alt={item.name} width={64} height={64} className="h-full w-full object-cover" />
                           </div>
                           <div>
                             <p className="font-bold text-brand-maroon text-sm leading-tight">{item.name}</p>

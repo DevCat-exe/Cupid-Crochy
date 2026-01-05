@@ -10,7 +10,7 @@ export default async function AdminLayout({
 }) {
   const session = await getServerSession(authOptions);
 
-  if (!session || ((session.user as any).role !== "admin" && (session.user as any).role !== "staff")) {
+  if (!session || (session.user as any).role !== "admin") {
     redirect("/login");
     return null; // unreachable but satisfies TS
   }

@@ -18,6 +18,8 @@ export interface IOrder extends Document {
   trackingLink?: string;
   paymentStatus: "pending" | "paid" | "failed" | "refunded";
   stripePaymentId?: string;
+  couponCode?: string;
+  discountAmount?: number;
   shippingAddress: {
     line1: string;
     line2?: string;
@@ -57,6 +59,8 @@ const OrderSchema: Schema = new Schema(
       default: "pending",
     },
     stripePaymentId: { type: String },
+    couponCode: { type: String },
+    discountAmount: { type: Number, default: 0 },
     shippingAddress: {
       line1: { type: String, required: true },
       line2: { type: String },

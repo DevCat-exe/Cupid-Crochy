@@ -4,6 +4,7 @@ import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
 import AuthProvider from "@/components/providers/AuthProvider";
 import { CartProvider } from "@/components/providers/CartProvider";
+import { ToastProvider } from "@/components/providers/ToastProvider";
 import "./globals.css";
 
 const cookie = Cookie({
@@ -31,13 +32,15 @@ export default function RootLayout({
     <html lang="en">
       <body className={`${outfit.variable} ${cookie.variable} antialiased min-h-screen flex flex-col`}>
         <AuthProvider>
-          <CartProvider>
-            <Header />
-            <main className="grow pt-20">
-              {children}
-            </main>
-            <Footer />
-          </CartProvider>
+          <ToastProvider>
+            <CartProvider>
+              <Header />
+              <main className="grow pt-20">
+                {children}
+              </main>
+              <Footer />
+            </CartProvider>
+          </ToastProvider>
         </AuthProvider>
       </body>
     </html>

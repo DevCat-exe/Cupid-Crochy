@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import Stripe from "stripe";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
+import connectDB from "@/lib/mongodb";
+import Coupon from "@/models/Coupon";
 
 if (!process.env.STRIPE_SECRET_KEY) {
   throw new Error("Missing STRIPE_SECRET_KEY");
@@ -27,10 +29,38 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { items }: { items: CartItem[] } = await request.json();
+    const { items, couponCode }: { items: CartItem[]; couponCode?: string } = await request.json();
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "No items in cart" }, { status: 400 });
+    }
+
+    // Calculate subtotal
+    const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    let discountAmount = 0;
+
+    // Validate coupon if provided
+    if (couponCode) {
+      await connectDB();
+      
+      const coupon = await Coupon.findOne({ code: couponCode.toUpperCase() });
+      
+      if (coupon && coupon.isActive) {
+        const now = new Date();
+        const isValid = 
+          now >= coupon.validFrom && 
+          now <= coupon.validUntil &&
+          (coupon.maxUses === 0 || coupon.usageCount < coupon.maxUses) &&
+          subtotal >= coupon.minOrderAmount;
+
+        if (isValid) {
+          if (coupon.discountType === "percentage") {
+            discountAmount = (subtotal * coupon.discount) / 100;
+          } else {
+            discountAmount = coupon.discount;
+          }
+        }
+      }
     }
 
     // Prepare line items for Stripe
@@ -46,6 +76,21 @@ export async function POST(request: Request) {
       quantity: item.quantity,
     }));
 
+    // Add discount as a line item if applicable
+    if (discountAmount > 0) {
+      line_items.push({
+        price_data: {
+          currency: "bdt",
+          product_data: {
+            name: `Coupon Discount (${couponCode})`,
+            images: ["https://via.placeholder.com/150"],
+          },
+          unit_amount: -Math.round(discountAmount * 100),
+        },
+        quantity: 1,
+      } as any);
+    }
+
     // Create Stripe Checkout Session
     const checkoutSession = await stripe.checkout.sessions.create({
       payment_method_types: ["card"],
@@ -60,6 +105,8 @@ export async function POST(request: Request) {
       metadata: {
         userId: session.user.id || "guest",
         items: JSON.stringify(items.map((i) => ({ id: i.id, quantity: i.quantity }))),
+        couponCode: couponCode || "",
+        discountAmount: discountAmount.toString(),
       },
     });
 

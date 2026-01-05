@@ -10,7 +10,8 @@ import {
   LogOut, 
   Home,
   Tag,
-  Users
+  Users,
+  CreditCard
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
@@ -30,6 +31,11 @@ const NAV_ITEMS = [
     label: "Orders",
     href: "/admin/orders",
     icon: ShoppingBag,
+  },
+  {
+    label: "Payments",
+    href: "/admin/payments",
+    icon: CreditCard,
   },
   {
     label: "Coupons",

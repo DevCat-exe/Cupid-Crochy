@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { motion } from "framer-motion";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { ArrowRight, Loader2 } from "lucide-react";
 import { signIn } from "next-auth/react";
 

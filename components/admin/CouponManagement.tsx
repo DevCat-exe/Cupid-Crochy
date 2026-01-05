@@ -16,16 +16,20 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "@/components/providers/ToastProvider";
+import { Modal } from "@/components/ui/Modal";
 
 interface Coupon {
   _id: string;
   code: string;
-  type: "percent" | "amount";
-  value: number;
-  expiryDate: string;
-  usageLimit: number;
-  usedCount: number;
-  createdAt: string;
+  discount: number;
+  discountType: "percentage" | "fixed";
+  minOrderAmount: number;
+  maxUses: number;
+  usageCount: number;
+  validFrom: string;
+  validUntil: string;
+  isActive: boolean;
 }
 
 export default function CouponManagementClient({ initialCoupons }: { initialCoupons: Coupon[] }) {
@@ -33,14 +37,17 @@ export default function CouponManagementClient({ initialCoupons }: { initialCoup
   const [searchQuery, setSearchQuery] = useState("");
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const { success, error, loading: toastLoading } = useToast();
 
   // Form State
   const [formData, setFormData] = useState({
     code: "",
-    type: "percent" as const,
-    value: 0,
-    expiryDate: "",
-    usageLimit: 0
+    discountType: "percentage" as const,
+    discount: "",
+    minOrderAmount: "",
+    maxUses: "",
+    validFrom: new Date().toISOString().split('T')[0],
+    validUntil: ""
   });
 
   const filteredCoupons = coupons.filter(c => 
@@ -49,12 +56,23 @@ export default function CouponManagementClient({ initialCoupons }: { initialCoup
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (loading) return;
+    
     setLoading(true);
+    toastLoading("Creating coupon...");
+
     try {
       const res = await fetch("/api/coupons", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData)
+        body: JSON.stringify({
+          ...formData,
+          discount: Number(formData.discount),
+          minOrderAmount: Number(formData.minOrderAmount),
+          maxUses: Number(formData.maxUses),
+          validFrom: new Date(formData.validFrom),
+          validUntil: new Date(formData.validUntil),
+        })
       });
 
       if (!res.ok) {
@@ -65,9 +83,18 @@ export default function CouponManagementClient({ initialCoupons }: { initialCoup
       const savedCoupon = await res.json();
       setCoupons([savedCoupon, ...coupons]);
       setIsModalOpen(false);
-      setFormData({ code: "", type: "percent", value: 0, expiryDate: "", usageLimit: 0 });
+      setFormData({
+        code: "",
+        discountType: "percentage",
+        discount: "",
+        minOrderAmount: "",
+        maxUses: "",
+        validFrom: new Date().toISOString().split('T')[0],
+        validUntil: ""
+      });
+      success("Coupon created successfully!");
     } catch (err: any) {
-      alert(err.message);
+      error(err.message);
     } finally {
       setLoading(false);
     }
@@ -79,8 +106,9 @@ export default function CouponManagementClient({ initialCoupons }: { initialCoup
       const res = await fetch(`/api/coupons/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete");
       setCoupons(coupons.filter(c => c._id !== id));
-    } catch (err) {
-      alert("Error deleting coupon");
+      success("Coupon deleted successfully!");
+    } catch (err: any) {
+      error(err.message);
     }
   };
 
@@ -127,7 +155,7 @@ export default function CouponManagementClient({ initialCoupons }: { initialCoup
 
               <div className="flex justify-between items-start mb-6">
                 <div className="bg-brand-pink/20 p-3 rounded-2xl">
-                  {coupon.type === "percent" ? <Percent className="h-6 w-6 text-brand-maroon" /> : <CircleDollarSign className="h-6 w-6 text-brand-maroon" />}
+                  {coupon.discountType === "percentage" ? <Percent className="h-6 w-6 text-brand-maroon" /> : <CircleDollarSign className="h-6 w-6 text-brand-maroon" />}
                 </div>
                 <button 
                   onClick={() => handleDelete(coupon._id)}
@@ -141,35 +169,36 @@ export default function CouponManagementClient({ initialCoupons }: { initialCoup
                 <div className="flex items-center justify-between">
                   <h3 className="text-2xl font-bold text-brand-maroon tracking-tight">{coupon.code}</h3>
                   <span className="bg-brand-pink text-brand-maroon px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-widest">
-                    {coupon.type === "percent" ? `${coupon.value}% OFF` : `৳${coupon.value} OFF`}
+                    {coupon.discountType === "percentage" ? `${coupon.discount}% OFF` : `৳${coupon.discount} OFF`}
                   </span>
                 </div>
 
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-1">
                     <p className="text-[10px] uppercase font-bold text-brand-maroon/40 tracking-widest flex items-center">
-                      <Calendar className="h-3 w-3 mr-1" /> Expiry
+                      <Calendar className="h-3 w-3 mr-1" /> Valid Until
                     </p>
-                    <p className="text-sm font-bold text-brand-maroon">{new Date(coupon.expiryDate).toLocaleDateString()}</p>
+                    <p className="text-sm font-bold text-brand-maroon">{new Date(coupon.validUntil).toLocaleDateString()}</p>
                   </div>
                   <div className="space-y-1">
                     <p className="text-[10px] uppercase font-bold text-brand-maroon/40 tracking-widest flex items-center">
                       <Tag className="h-3 w-3 mr-1" /> Usage
                     </p>
-                    <p className="text-sm font-bold text-brand-maroon">{coupon.usedCount} / {coupon.usageLimit}</p>
+                    <p className="text-sm font-bold text-brand-maroon">{coupon.usageCount} / {coupon.maxUses === 0 ? "Unlimited" : coupon.maxUses}</p>
                   </div>
                 </div>
 
-                {/* Progress Bar */}
-                <div className="pt-2">
-                  <div className="h-2 bg-brand-pink/20 rounded-full overflow-hidden">
-                    <motion.div 
-                      initial={{ width: 0 }}
-                      animate={{ width: `${(coupon.usedCount / coupon.usageLimit) * 100}%` }}
-                      className="h-full bg-brand-maroon"
-                    />
+                {coupon.maxUses > 0 && (
+                  <div className="pt-2">
+                    <div className="h-2 bg-brand-pink/20 rounded-full overflow-hidden">
+                      <motion.div 
+                        initial={{ width: 0 }}
+                        animate={{ width: `${Math.min((coupon.usageCount / coupon.maxUses) * 100, 100)}%` }}
+                        className="h-full bg-brand-maroon"
+                      />
+                    </div>
                   </div>
-                </div>
+                )}
               </div>
             </motion.div>
           ))}
@@ -177,108 +206,108 @@ export default function CouponManagementClient({ initialCoupons }: { initialCoup
       </div>
 
       {/* Modal */}
-      <AnimatePresence>
-        {isModalOpen && (
-          <div className="fixed inset-0 z-100 flex items-center justify-center px-4">
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              onClick={() => setIsModalOpen(false)}
-              className="absolute inset-0 bg-brand-maroon/40 backdrop-blur-sm"
+      <Modal 
+        isOpen={isModalOpen} 
+        onClose={() => setIsModalOpen(false)}
+        title="New Coupon"
+      >
+        <form onSubmit={handleSubmit} className="space-y-6">
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-brand-maroon/60 uppercase tracking-widest pl-1">Coupon Code</label>
+            <input
+              required
+              type="text"
+              value={formData.code}
+              onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
+              placeholder="WINTER2024"
+              className="w-full bg-brand-pink/10 border border-brand-maroon/5 rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-maroon/20 outline-none transition-all text-brand-maroon font-bold text-xl uppercase"
             />
-            <motion.div
-              initial={{ opacity: 0, scale: 0.95, y: 20 }}
-              animate={{ opacity: 1, scale: 1, y: 0 }}
-              exit={{ opacity: 0, scale: 0.95, y: 20 }}
-              className="relative bg-white w-full max-w-lg rounded-[3rem] shadow-2xl overflow-hidden"
-            >
-              <div className="p-8 border-b border-brand-maroon/5 flex justify-between items-center bg-brand-pink/10">
-                <h3 className="text-2xl font-bold text-brand-maroon">New Campaign</h3>
-                <button
-                  onClick={() => setIsModalOpen(false)}
-                  className="p-3 rounded-2xl hover:bg-white text-brand-maroon/40 hover:text-brand-maroon transition-all shadow-sm"
-                >
-                  <X className="h-6 w-6" />
-                </button>
-              </div>
-
-              <form onSubmit={handleSubmit} className="p-8 space-y-6">
-                <div className="space-y-2">
-                  <label className="text-[10px] font-bold text-brand-maroon/60 uppercase tracking-widest pl-1">Coupon Code</label>
-                  <input
-                    required
-                    type="text"
-                    value={formData.code}
-                    onChange={(e) => setFormData({ ...formData, code: e.target.value.toUpperCase() })}
-                    placeholder="WINTER2024"
-                    className="w-full bg-brand-pink/10 border border-brand-maroon/5 rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-maroon/20 outline-none transition-all text-brand-maroon font-bold text-xl uppercase"
-                  />
-                </div>
-
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-brand-maroon/60 uppercase tracking-widest pl-1">Type</label>
-                    <select
-                      value={formData.type}
-                      onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                      className="w-full bg-brand-pink/10 border border-brand-maroon/5 rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-maroon/20 outline-none transition-all text-brand-maroon font-bold appearance-none"
-                    >
-                      <option value="percent">Percentage %</option>
-                      <option value="amount">Fixed Amount ৳</option>
-                    </select>
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-brand-maroon/60 uppercase tracking-widest pl-1">Value</label>
-                    <input
-                      required
-                      type="number"
-                      value={formData.value}
-                      onChange={(e) => setFormData({ ...formData, value: Number(e.target.value) })}
-                      placeholder="10"
-                      className="w-full bg-brand-pink/10 border border-brand-maroon/5 rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-maroon/20 outline-none transition-all text-brand-maroon font-bold"
-                    />
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-6">
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-brand-maroon/60 uppercase tracking-widest pl-1">Expiry Date</label>
-                    <input
-                      required
-                      type="date"
-                      value={formData.expiryDate}
-                      onChange={(e) => setFormData({ ...formData, expiryDate: e.target.value })}
-                      className="w-full bg-brand-pink/10 border border-brand-maroon/5 rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-maroon/20 outline-none transition-all text-brand-maroon font-bold"
-                    />
-                  </div>
-                  <div className="space-y-2">
-                    <label className="text-[10px] font-bold text-brand-maroon/60 uppercase tracking-widest pl-1">Usage Limit</label>
-                    <input
-                      required
-                      type="number"
-                      value={formData.usageLimit}
-                      onChange={(e) => setFormData({ ...formData, usageLimit: Number(e.target.value) })}
-                      placeholder="100"
-                      className="w-full bg-brand-pink/10 border border-brand-maroon/5 rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-maroon/20 outline-none transition-all text-brand-maroon font-bold"
-                    />
-                  </div>
-                </div>
-
-                <div className="pt-4">
-                  <button
-                    disabled={loading}
-                    type="submit"
-                    className="w-full bg-brand-maroon text-white font-bold py-5 rounded-3xl shadow-xl hover:shadow-brand-maroon/20 hover:bg-brand-maroon/90 transition-all flex items-center justify-center disabled:opacity-50"
-                  >
-                    {loading ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : "Launch Campaign"}
-                  </button>
-                </div>
-              </form>
-            </motion.div>
           </div>
-        )}
-      </AnimatePresence>
+
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-brand-maroon/60 uppercase tracking-widest pl-1">Type</label>
+              <select
+                value={formData.discountType}
+                onChange={(e) => setFormData({ ...formData, discountType: e.target.value as any })}
+                className="w-full bg-brand-pink/10 border border-brand-maroon/5 rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-maroon/20 outline-none transition-all text-brand-maroon font-bold appearance-none"
+              >
+                <option value="percentage">Percentage %</option>
+                <option value="fixed">Fixed Amount ৳</option>
+              </select>
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-brand-maroon/60 uppercase tracking-widest pl-1">Value</label>
+              <input
+                required
+                type="number"
+                value={formData.discount}
+                onChange={(e) => setFormData({ ...formData, discount: e.target.value })}
+                placeholder="10"
+                className="w-full bg-brand-pink/10 border border-brand-maroon/5 rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-maroon/20 outline-none transition-all text-brand-maroon font-bold"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-brand-maroon/60 uppercase tracking-widest pl-1">Minimum Order Amount (BDT)</label>
+            <input
+              required
+              type="number"
+              value={formData.minOrderAmount}
+              onChange={(e) => setFormData({ ...formData, minOrderAmount: e.target.value })}
+              placeholder="500"
+              className="w-full bg-brand-pink/10 border border-brand-maroon/5 rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-maroon/20 outline-none transition-all text-brand-maroon font-bold"
+            />
+          </div>
+
+          <div className="grid grid-cols-2 gap-6">
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-brand-maroon/60 uppercase tracking-widest pl-1">Valid From</label>
+              <input
+                required
+                type="date"
+                value={formData.validFrom}
+                onChange={(e) => setFormData({ ...formData, validFrom: e.target.value })}
+                className="w-full bg-brand-pink/10 border border-brand-maroon/5 rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-maroon/20 outline-none transition-all text-brand-maroon font-bold"
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-[10px] font-bold text-brand-maroon/60 uppercase tracking-widest pl-1">Valid Until</label>
+              <input
+                required
+                type="date"
+                value={formData.validUntil}
+                onChange={(e) => setFormData({ ...formData, validUntil: e.target.value })}
+                className="w-full bg-brand-pink/10 border border-brand-maroon/5 rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-maroon/20 outline-none transition-all text-brand-maroon font-bold"
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-[10px] font-bold text-brand-maroon/60 uppercase tracking-widest pl-1">Usage Limit (0 for unlimited)</label>
+            <input
+              required
+              type="number"
+              value={formData.maxUses}
+              onChange={(e) => setFormData({ ...formData, maxUses: e.target.value })}
+              placeholder="100"
+              min="0"
+              className="w-full bg-brand-pink/10 border border-brand-maroon/5 rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-maroon/20 outline-none transition-all text-brand-maroon font-bold"
+            />
+          </div>
+
+          <div className="pt-4">
+            <button
+              disabled={loading}
+              type="submit"
+              className="w-full bg-brand-maroon text-white font-bold py-5 rounded-3xl shadow-xl hover:shadow-brand-maroon/20 hover:bg-brand-maroon/90 transition-all flex items-center justify-center disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : "Launch Campaign"}
+            </button>
+          </div>
+        </form>
+      </Modal>
     </div>
   );
 }

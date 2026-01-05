@@ -1,46 +1,40 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectDB from "@/lib/mongodb";
 import Coupon from "@/models/Coupon";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || ((session.user as any).role !== "admin" && (session.user as any).role !== "staff")) {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
     await connectDB();
     const coupons = await Coupon.find().sort({ createdAt: -1 });
-    return NextResponse.json(coupons);
+    return NextResponse.json(JSON.parse(JSON.stringify(coupons)));
   } catch (error) {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    console.error("Error fetching coupons:", error);
+    return NextResponse.json({ error: "Failed to fetch coupons" }, { status: 500 });
   }
 }
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== "admin") {
-      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-    }
-
-    const body = await request.json();
     await connectDB();
-
-    const existing = await Coupon.findOne({ code: body.code.toUpperCase() });
-    if (existing) {
-      return NextResponse.json({ error: "Coupon code already exists" }, { status: 400 });
-    }
+    const body = await request.json();
 
     const coupon = await Coupon.create({
-      ...body,
-      code: body.code.toUpperCase()
+      code: body.code.toUpperCase(),
+      discount: body.discount,
+      discountType: body.discountType,
+      minOrderAmount: body.minOrderAmount || 0,
+      maxUses: body.maxUses,
+      validFrom: body.validFrom || new Date(),
+      validUntil: body.validUntil,
+      isActive: true,
     });
 
-    return NextResponse.json(coupon);
-  } catch (error) {
-    return NextResponse.json({ error: "Server error" }, { status: 500 });
+    return NextResponse.json(JSON.parse(JSON.stringify(coupon)), { status: 201 });
+  } catch (error: any) {
+    console.error("Error creating coupon:", error);
+    return NextResponse.json(
+      { error: error.message || "Failed to create coupon" },
+      { status: 500 }
+    );
   }
 }
