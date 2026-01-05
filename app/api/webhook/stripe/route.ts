@@ -6,71 +6,110 @@ import Product from "@/models/Product";
 import { Resend } from "resend";
 
 if (!process.env.STRIPE_SECRET_KEY) throw new Error("Missing STRIPE_SECRET_KEY");
-if (!process.env.STRIPE_WEBHOOK_SECRET) throw new Error("Missing STRIPE_WEBHOOK_SECRET");
-if (!process.env.RESEND_API_KEY) throw new Error("Missing RESEND_API_KEY");
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2025-02-24-preview" as any,
-});
+const stripe = new Stripe(process.env.STRIPE_SECRET_KEY);
 
+interface SessionWithShipping extends Stripe.Checkout.Session {
+  shipping_details?: {
+    address?: {
+      line1?: string | null;
+      line2?: string | null;
+      city?: string | null;
+      state?: string | null;
+      postal_code?: string | null;
+      country?: string | null;
+    } | null;
+  } | null;
+}
 const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: Request) {
   const body = await req.text();
   const signature = req.headers.get("stripe-signature") as string;
 
+  if (!process.env.STRIPE_WEBHOOK_SECRET) {
+    console.error("Missing STRIPE_WEBHOOK_SECRET");
+    return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+  }
+
+  if (!process.env.RESEND_API_KEY) {
+     console.error("Missing RESEND_API_KEY");
+     // We might continue without Resend but logging it is good. 
+     // Or return 500. Let's return 500 for safety.
+     return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+  }
+
   let event: Stripe.Event;
 
   try {
     event = stripe.webhooks.constructEvent(body, signature, process.env.STRIPE_WEBHOOK_SECRET!);
-  } catch (err: any) {
-    console.error(`Webhook signature verification failed: ${err.message}`);
+  } catch (err) {
+    const errorMessage = err instanceof Error ? err.message : "Unknown error";
+    console.error(`Webhook signature verification failed: ${errorMessage}`);
     return NextResponse.json({ error: "Invalid signature" }, { status: 400 });
   }
 
   if (event.type === "checkout.session.completed") {
-    const session = event.data.object as Stripe.Checkout.Session;
-    
-    await connectDB();
+    try {
+      const session = event.data.object as SessionWithShipping;
+      
+      await connectDB();
 
-    // Extract order info from metadata
-    const metadata = session.metadata;
-    const items = JSON.parse(metadata?.items || "[]");
-    const userId = metadata?.userId || "guest";
+      // Extract order info from metadata
+      const metadata = session.metadata;
+      console.log("Webhook metadata:", metadata);
+      const items = JSON.parse(metadata?.items || "[]");
+      const userId = metadata?.userId || "guest";
+      console.log("Processing order for user:", userId);
 
-    // Prepare items for Order model (need full product info)
-    const orderItems = await Promise.all(
-      items.map(async (item: { id: string; quantity: number }) => {
-        const product = await Product.findById(item.id);
-        return {
-          productId: product._id,
-          name: product.name,
-          price: product.price,
-          quantity: item.quantity,
-          image: product.images[0],
-        };
-      })
-    );
+      // Prepare items for Order model (need full product info)
+      const orderItems = await Promise.all(
+        items.map(async (item: { id: string; quantity: number }) => {
+          const product = await Product.findById(item.id);
+          if (!product) {
+             console.error(`Product not found: ${item.id}`);
+             throw new Error(`Product not found: ${item.id}`);
+          }
+          return {
+            productId: product._id,
+            name: product.name,
+            price: product.price,
+            quantity: item.quantity,
+            image: product.images[0],
+          };
+        })
+      );
 
-    // Create the order
-    const order = await Order.create({
-      userId: userId === "guest" ? null : userId,
-      userName: session.customer_details?.name || "Guest",
-      userEmail: session.customer_details?.email || "guest@example.com",
-      items: orderItems,
-      total: (session.amount_total || 0) / 100,
-      status: "pending",
-      paymentStatus: "paid",
-      stripePaymentId: session.payment_intent as string,
-      shippingAddress: {
-        line1: session.shipping_details?.address?.line1 || "",
-        line2: session.shipping_details?.address?.line2 || undefined,
-        city: session.shipping_details?.address?.city || "",
-        state: session.shipping_details?.address?.state || "",
-        postalCode: session.shipping_details?.address?.postal_code || "",
-        country: session.shipping_details?.address?.country || "",
-      },
-    });
+      console.log("Order items prepared:", orderItems.length);
+
+      // Create the order
+      const order = await Order.create({
+        userId: userId === "guest" ? undefined : userId,
+        userName: session.customer_details?.name || "Guest",
+        userEmail: session.customer_details?.email || "guest@example.com",
+        items: orderItems,
+        total: (session.amount_total || 0) / 100,
+        status: "pending",
+        paymentStatus: "paid",
+        stripePaymentId: session.payment_intent as string,
+        shippingAddress: {
+          line1: session.shipping_details?.address?.line1 || "No Address Provided",
+          line2: session.shipping_details?.address?.line2 || undefined,
+          city: session.shipping_details?.address?.city || "Unknown",
+          state: session.shipping_details?.address?.state || "Unknown",
+          postalCode: session.shipping_details?.address?.postal_code || "Unknown",
+          country: session.shipping_details?.address?.country || "Unknown",
+        },
+      });
+
+      console.log("Order created successfully:", order._id);
+
+      // Send confirmation email ... (rest of logic)
+    } catch (error) {
+       console.error("CRITICAL ERROR IN STRIPE WEBHOOK:", error);
+       return NextResponse.json({ error: "Internal Server Error during order processing" }, { status: 500 });
+    }
+  }
 
     // Send confirmation email
     try {
@@ -115,8 +154,3 @@ export async function POST(req: Request) {
   return NextResponse.json({ received: true });
 }
 
-export const config = {
-  api: {
-    bodyParser: false,
-  },
-};

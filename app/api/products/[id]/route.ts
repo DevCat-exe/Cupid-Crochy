@@ -6,8 +6,9 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     await connectDB();
     const product = await Product.findById(params.id);
@@ -25,11 +26,13 @@ export async function GET(
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions);
-    if (!session || ((session.user as any).role !== "admin" && (session.user as any).role !== "staff")) {
+    const user = session?.user as { role: string } | undefined;
+    if (!session || (user?.role !== "admin" && user?.role !== "staff")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -54,11 +57,12 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== "admin") {
+    if (!session || (session.user as { role: string }).role !== "admin") {
       return NextResponse.json({ error: "Forbidden: Admins only" }, { status: 403 });
     }
 

@@ -12,7 +12,7 @@ interface CartSidebarProps {
 }
 
 export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
-  const { cartItems, getCartTotal, getCartCount } = useCart();
+  const { cartItems, getCartTotal, getCartCount, updateQuantity, removeItem } = useCart();
   const subtotal = getCartTotal();
   const shipping = 50; // Fixed shipping for now
   const total = subtotal + shipping;
@@ -37,7 +37,7 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="w-screen sm:w-112.5 bg-brand-pink/10 backdrop-blur-md shadow-2xl flex flex-col border-l border-white/20"
+              className="w-screen sm:w-112.5 bg-brand-beige shadow-2xl flex flex-col border-l border-brand-maroon/10"
             >
               {/* Header */}
               <div className="p-8 flex items-center justify-between border-b border-brand-maroon/5">
@@ -82,7 +82,9 @@ export default function CartSidebar({ isOpen, onClose }: CartSidebarProps) {
                   cartItems.map((item) => (
                     <CartItem
                       key={item.id}
-                      item={item}
+                      {...item}
+                      onUpdateQuantity={updateQuantity}
+                      onRemove={removeItem}
                     />
                   ))
                 )}

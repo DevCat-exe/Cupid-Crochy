@@ -6,11 +6,13 @@ import User from "@/models/User";
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== "admin") {
+    const user = session?.user as { role: string } | undefined;
+    if (!session || user?.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -23,18 +25,20 @@ export async function PUT(
     }
 
     return NextResponse.json(updated);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== "admin") {
+    const user = session?.user as { role: string } | undefined;
+    if (!session || user?.role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -45,7 +49,7 @@ export async function DELETE(
     }
 
     return NextResponse.json({ message: "User deleted" });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

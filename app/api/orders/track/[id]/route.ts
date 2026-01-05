@@ -4,12 +4,14 @@ import Order from "@/models/Order";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     await connectDB();
-    // Allow public access to status and items for tracking
-    const order = await Order.findById(params.id).select("status items total userName createdAt shippingAddress.city");
+    const order = await Order.findById(params.id).select(
+      "_id status items total createdAt trackingLink shippingAddress userName userEmail"
+    );
 
     if (!order) {
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
@@ -17,7 +19,10 @@ export async function GET(
 
     return NextResponse.json(order);
   } catch (error) {
-    console.error("Tracking API error:", error);
-    return NextResponse.json({ error: "Invalid Order ID" }, { status: 400 });
+    console.error("Failed to fetch order:", error);
+    return NextResponse.json(
+      { error: "Internal Server Error" },
+      { status: 500 }
+    );
   }
 }

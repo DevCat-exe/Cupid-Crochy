@@ -4,6 +4,7 @@ import { useState, useEffect } from "react";
 import { motion } from "framer-motion";
 import { Star, ShoppingBag, ArrowLeft, Check, Truck, ShieldCheck, Heart } from "lucide-react";
 import Link from "next/link";
+import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/components/providers/CartProvider";
@@ -75,12 +76,14 @@ export default function ProductDetailPage() {
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
-              className="aspect-square rounded-[3rem] overflow-hidden bg-brand-pink/20 shadow-2xl"
+              className="aspect-square rounded-[3rem] overflow-hidden bg-brand-pink/20 shadow-2xl relative"
             >
-              <img
+              <Image
                 src={product.images[selectedImage]}
                 alt={product.name}
-                className="w-full h-full object-cover"
+                fill
+                className="object-cover"
+                priority
               />
             </motion.div>
 
@@ -90,11 +93,16 @@ export default function ProductDetailPage() {
                   key={idx}
                   onClick={() => setSelectedImage(idx)}
                   className={cn(
-                    "aspect-square rounded-2xl overflow-hidden border-4 transition-all",
+                    "aspect-square rounded-2xl overflow-hidden border-4 transition-all relative",
                     selectedImage === idx ? "border-brand-maroon shadow-lg scale-105" : "border-transparent opacity-60 hover:opacity-100"
                   )}
                 >
-                  <img src={img} alt={`${product.name} thumbnail ${idx}`} className="w-full h-full object-cover" />
+                  <Image 
+                    src={img} 
+                    alt={`${product.name} thumbnail ${idx}`} 
+                    fill 
+                    className="object-cover" 
+                  />
                 </button>
               ))}
             </div>
@@ -171,7 +179,7 @@ export default function ProductDetailPage() {
                       image: product.images[0],
                       quantity: quantity
                     })}
-                    className="flex-grow bg-brand-maroon text-white font-bold h-14 rounded-2xl shadow-xl hover:shadow-brand-maroon/20 hover:scale-[1.02] transition-all flex items-center justify-center space-x-3 group"
+                    className="grow bg-brand-maroon text-white font-bold h-14 rounded-2xl shadow-xl hover:shadow-brand-maroon/20 hover:scale-[1.02] transition-all flex items-center justify-center space-x-3 group"
                   >
                     <ShoppingBag className="h-5 w-5" />
                     <span>Add to Cart</span>

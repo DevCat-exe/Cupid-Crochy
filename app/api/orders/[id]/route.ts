@@ -6,8 +6,9 @@ import Order from "@/models/Order";
 
 export async function GET(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -22,28 +23,31 @@ export async function GET(
     }
 
     // Only allow owner or admin/staff
+    const user = session.user as { id: string; role: string };
     if (
-      order.userId?.toString() !== (session.user as any).id &&
-      (session.user as any).role !== "admin" &&
-      (session.user as any).role !== "staff"
+      order.userId?.toString() !== user.id &&
+      user.role !== "admin" &&
+      user.role !== "staff"
     ) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
     return NextResponse.json(order);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions);
+    const user = session?.user as { role: string } | undefined;
 
-    if (!session || ((session.user as any).role !== "admin" && (session.user as any).role !== "staff")) {
+    if (!session || (user?.role !== "admin" && user?.role !== "staff")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -61,19 +65,20 @@ export async function PUT(
     }
 
     return NextResponse.json(updatedOrder);
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session || (session.user as any).role !== "admin") {
+    if (!session || (session.user as { role: string }).role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -85,7 +90,7 @@ export async function DELETE(
     }
 
     return NextResponse.json({ message: "Order deleted" });
-  } catch (error) {
+  } catch {
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

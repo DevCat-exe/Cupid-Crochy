@@ -8,25 +8,33 @@ if (!process.env.STRIPE_SECRET_KEY) {
 }
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY, {
-  apiVersion: "2025-02-24-preview" as any,
+  apiVersion: "2025-12-15.clover",
 });
+
+interface CartItem {
+  id: string;
+  name: string;
+  price: number;
+  quantity: number;
+  image: string;
+}
 
 export async function POST(request: Request) {
   try {
     const session = await getServerSession(authOptions);
 
-    if (!session) {
+    if (!session || !session.user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    const { items } = await request.json();
+    const { items }: { items: CartItem[] } = await request.json();
 
     if (!items || items.length === 0) {
       return NextResponse.json({ error: "No items in cart" }, { status: 400 });
     }
 
     // Prepare line items for Stripe
-    const line_items = items.map((item: any) => ({
+    const line_items = items.map((item) => ({
       price_data: {
         currency: "bdt",
         product_data: {
@@ -45,16 +53,23 @@ export async function POST(request: Request) {
       mode: "payment",
       success_url: `${process.env.NEXTAUTH_URL}/checkout/success?session_id={CHECKOUT_SESSION_ID}`,
       cancel_url: `${process.env.NEXTAUTH_URL}/checkout/cancel`,
-      customer_email: session?.user?.email || undefined,
+      customer_email: session.user.email || undefined,
+      shipping_address_collection: {
+        allowed_countries: ["BD"], // Adjust to your target countries
+      },
       metadata: {
-        userId: (session?.user as any)?.id || "guest",
-        items: JSON.stringify(items.map((i: any) => ({ id: i.id, quantity: i.quantity }))),
+        userId: session.user.id || "guest",
+        items: JSON.stringify(items.map((i) => ({ id: i.id, quantity: i.quantity }))),
       },
     });
 
     return NextResponse.json({ id: checkoutSession.id, url: checkoutSession.url });
-  } catch (error) {
-    console.error("Stripe Checkout error:", error);
-    return NextResponse.json({ error: "Failed to create checkout session" }, { status: 500 });
+  } catch (error: unknown) {
+    const err = error as { message?: string; type?: string };
+    console.error("Stripe Checkout error:", err);
+    return NextResponse.json({ 
+      error: err.message || "Failed to create checkout session",
+      details: err.type 
+    }, { status: 500 });
   }
 }

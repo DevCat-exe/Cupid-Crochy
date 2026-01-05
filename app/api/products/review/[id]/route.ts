@@ -6,8 +6,9 @@ import Product from "@/models/Product";
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  props: { params: Promise<{ id: string }> }
 ) {
+  const params = await props.params;
   try {
     const session = await getServerSession(authOptions);
     if (!session) {
@@ -37,7 +38,7 @@ export async function POST(
     product.reviews.push(newReview);
     
     // Update average rating
-    const totalRating = product.reviews.reduce((acc: number, item: any) => acc + item.rating, 0);
+    const totalRating = product.reviews.reduce((acc: number, item: { rating: number }) => acc + item.rating, 0);
     product.rating = totalRating / product.reviews.length;
 
     await product.save();

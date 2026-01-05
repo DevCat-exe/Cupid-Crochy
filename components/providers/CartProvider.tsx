@@ -5,6 +5,7 @@ import {
   useContext,
   useState,
   useEffect,
+  useCallback,
   ReactNode,
 } from "react";
 import CartSidebar from "@/components/cart/CartSidebar";
@@ -49,15 +50,18 @@ export function CartProvider({ children }: CartProviderProps) {
   const [isCartOpen, setIsCartOpen] = useState(false);
   const [cartItems, setCartItems] = useState<CartItem[]>([]);
 
-  // Load cart from localStorage on initial render
+  // Load cart from localStorage on initial render - Client side only
   useEffect(() => {
-    try {
-      const savedCart = localStorage.getItem("cart");
-      if (savedCart) {
-        setCartItems(JSON.parse(savedCart));
+    const savedCart = localStorage.getItem("cart");
+    if (savedCart) {
+      try {
+        const parsed = JSON.parse(savedCart);
+        requestAnimationFrame(() => {
+          setCartItems(parsed);
+        });
+      } catch (e) {
+        console.error("Failed to parse cart", e);
       }
-    } catch (e) {
-      console.error("Failed to parse cart from localStorage", e);
     }
   }, []);
 
@@ -66,11 +70,11 @@ export function CartProvider({ children }: CartProviderProps) {
     localStorage.setItem("cart", JSON.stringify(cartItems));
   }, [cartItems]);
 
-  const openCart = () => setIsCartOpen(true);
-  const closeCart = () => setIsCartOpen(false);
-  const toggleCart = () => setIsCartOpen(!isCartOpen);
+  const openCart = useCallback(() => setIsCartOpen(true), []);
+  const closeCart = useCallback(() => setIsCartOpen(false), []);
+  const toggleCart = useCallback(() => setIsCartOpen(prev => !prev), []);
 
-  const addToCart = (newItem: CartItem) => {
+  const addToCart = useCallback((newItem: CartItem) => {
     setCartItems((prevItems) => {
       const existingItemIndex = prevItems.findIndex(
         (item) => item.id === newItem.id
@@ -87,33 +91,33 @@ export function CartProvider({ children }: CartProviderProps) {
         return [...prevItems, newItem];
       }
     });
-    openCart(); // Automatically open cart when item is added
-  };
+    openCart();
+  }, [openCart]);
 
-  const updateQuantity = (id: string, quantity: number) => {
+  const updateQuantity = useCallback((id: string, quantity: number) => {
     setCartItems((prevItems) =>
       prevItems.map((item) => (item.id === id ? { ...item, quantity } : item))
     );
-  };
+  }, []);
 
-  const removeItem = (id: string) => {
+  const removeItem = useCallback((id: string) => {
     setCartItems((prevItems) => prevItems.filter((item) => item.id !== id));
-  };
+  }, []);
 
-  const clearCart = () => {
+  const clearCart = useCallback(() => {
     setCartItems([]);
-  };
+  }, []);
 
-  const getCartTotal = () => {
+  const getCartTotal = useCallback(() => {
     return cartItems.reduce(
       (total, item) => total + item.price * item.quantity,
       0
     );
-  };
+  }, [cartItems]);
 
-  const getCartCount = () => {
+  const getCartCount = useCallback(() => {
     return cartItems.reduce((count, item) => count + item.quantity, 0);
-  };
+  }, [cartItems]);
 
   return (
     <CartContext.Provider

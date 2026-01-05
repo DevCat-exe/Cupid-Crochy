@@ -15,6 +15,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { generateInvoice } from "@/lib/pdf-generator";
+import Image from "next/image";
 
 interface OrderItem {
   productId: string;
@@ -27,11 +28,12 @@ interface OrderItem {
 interface Order {
   _id: string;
   userName: string;
+  userEmail: string;
   items: OrderItem[];
   total: number;
   status: "pending" | "processing" | "shipped" | "delivered" | "cancelled";
   createdAt: string;
-  shippingAddress?: {
+  shippingAddress: {
     city: string;
   };
 }
@@ -58,8 +60,12 @@ export default function OrderTrackingPage() {
       if (!res.ok) throw new Error("Order not found. Please check your ID.");
       const data = await res.json();
       setOrder(data);
-    } catch (err: any) {
-      setError(err.message);
+    } catch (err) {
+      if (err instanceof Error) {
+        setError(err.message);
+      } else {
+        setError("An unexpected error occurred");
+      }
       setOrder(null);
     } finally {
       setLoading(false);
@@ -120,7 +126,7 @@ export default function OrderTrackingPage() {
             placeholder="Order ID (e.g. 65db...)"
             value={orderId}
             onChange={(e) => setOrderId(e.target.value)}
-            className="w-full bg-white rounded-[2rem] py-8 pl-16 pr-40 shadow-2xl border border-brand-maroon/5 focus:ring-4 focus:ring-brand-maroon/5 outline-none text-xl font-bold text-brand-maroon transition-all"
+            className="w-full bg-white rounded-4xl py-8 pl-16 pr-40 shadow-2xl border border-brand-maroon/5 focus:ring-4 focus:ring-brand-maroon/5 outline-none text-xl font-bold text-brand-maroon transition-all"
           />
           <button
             disabled={loading}
@@ -201,7 +207,7 @@ export default function OrderTrackingPage() {
                       {order.items.map((item, idx) => (
                         <div key={idx} className="flex items-center space-x-4">
                           <div className="h-16 w-16 rounded-2xl overflow-hidden bg-brand-pink/10 shrink-0 border border-brand-maroon/5">
-                            <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                            <Image src={item.image} alt={item.name} className="h-full w-full object-cover" />
                           </div>
                           <div>
                             <p className="font-bold text-brand-maroon text-sm leading-tight">{item.name}</p>
@@ -217,7 +223,7 @@ export default function OrderTrackingPage() {
                       <MapPin className="h-4 w-4 mr-2" />
                       Delivery Details
                     </h4>
-                    <div className="bg-brand-pink/10 p-6 rounded-[2rem] border border-brand-maroon/5">
+                    <div className="bg-brand-pink/10 p-6 rounded-4xl border border-brand-maroon/5">
                       <p className="text-brand-maroon text-sm font-bold mb-1">Shipping for {order.userName}</p>
                       <p className="text-brand-maroon/60 text-sm font-medium">Location: {order.shippingAddress?.city || "Handled with care"}</p>
                       <div className="mt-6 pt-4 border-t border-brand-maroon/5 flex flex-col sm:flex-row justify-between items-center gap-4">

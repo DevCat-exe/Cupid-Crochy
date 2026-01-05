@@ -1,8 +1,8 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect } from "react";
 import { motion } from "framer-motion";
-import { CheckCircle2, ShoppingBag, ArrowRight, Loader2 } from "lucide-react";
+import { CheckCircle2, ShoppingBag, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCart } from "@/components/providers/CartProvider";
@@ -10,17 +10,14 @@ import { useCart } from "@/components/providers/CartProvider";
 export default function CheckoutSuccessPage() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
-  const { clearCart } = useCart();
-  const [loading, setLoading] = useState(true);
+  const { clearCart, cartItems } = useCart();
+  const cleared = typeof window !== "undefined" && !cartItems.length;
 
   useEffect(() => {
-    if (sessionId) {
-      // In a real app, we'd verify the session here or via webhook
-      // For now, we clear the cart and display success
+    if (sessionId && !cleared) {
       clearCart();
-      setLoading(false);
     }
-  }, [sessionId, clearCart]);
+  }, [sessionId, clearCart, cleared]);
 
   return (
     <div className="min-h-[80vh] flex items-center justify-center px-4">
