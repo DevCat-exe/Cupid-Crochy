@@ -3,15 +3,16 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { motion } from "framer-motion";
-import { Loader2, Package, Calendar, MapPin, User as UserIcon } from "lucide-react";
+import { Loader2, Package, Calendar, Download, ExternalLink, User as UserIcon } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
-import { AnimatePresence } from "framer-motion";
 import Image from "next/image";
+import UserSidebar from "@/components/ui/UserSidebar";
+import { useToast } from "@/components/providers/ToastProvider";
 
 interface Order {
   _id: string;
+  shortOrderId: string;
   total: number;
   status: string;
   paymentStatus: string;
@@ -29,6 +30,7 @@ export default function DashboardPage() {
   const router = useRouter();
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
+  const { success, error: toastError } = useToast();
 
   const [activeTab, setActiveTab] = useState("orders");
   const [newName, setNewName] = useState(session?.user?.name || "");
@@ -63,6 +65,29 @@ export default function DashboardPage() {
     }
   };
 
+  const downloadInvoice = async (orderId: string) => {
+    try {
+      const response = await fetch(`/api/orders/invoice?id=${orderId}`);
+      if (!response.ok) {
+        throw new Error("Failed to download invoice");
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement("a");
+      link.href = url;
+      link.download = `invoice-${orderId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+      success("Invoice downloaded successfully");
+    } catch (error) {
+      console.error("Error downloading invoice:", error);
+      toastError("Failed to download invoice");
+    }
+  };
+
   const handleUpdateProfile = async (e: React.FormEvent) => {
     e.preventDefault();
     setUpdateLoading(true);
@@ -73,11 +98,12 @@ export default function DashboardPage() {
           body: JSON.stringify({ name: newName, image: newImage }),
        });
        if (res.ok) {
-          router.refresh(); // Refresh session
-          alert("Profile updated! You might need to re-login to see changes in common areas.");
+          router.refresh();
+          success("Profile updated successfully!");
        }
     } catch (error) {
        console.error("Update failed", error);
+       toastError("Failed to update profile");
     } finally {
        setUpdateLoading(false);
     }
@@ -93,193 +119,122 @@ export default function DashboardPage() {
 
   if (!session) return null;
 
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case "delivered": return "bg-green-100 text-green-700";
+      case "cancelled": return "bg-red-100 text-red-700";
+      case "shipped": return "bg-blue-100 text-blue-700";
+      case "processing": return "bg-purple-100 text-purple-700";
+      default: return "bg-yellow-100 text-yellow-700";
+    }
+  };
+
   return (
-    <div className="min-h-screen bg-brand-beige/30 pt-32 pb-16">
-      <div className="container mx-auto px-4">
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          className="max-w-5xl mx-auto"
-        >
-          <div className="flex flex-col md:flex-row gap-8 items-start">
-            
-            {/* Sidebar / Profile Card */}
-            <div className="w-full md:w-1/3 space-y-6">
-              <div className="bg-white p-6 rounded-2xl shadow-sm border border-brand-maroon/5 text-center">
-                 <div className="w-24 h-24 mx-auto mb-4 rounded-full overflow-hidden border-4 border-brand-pink/30">
-                   {session.user?.image ? (
-                     <div className="relative w-full h-full">
-                       <Image src={session.user.image} alt="Profile" fill className="object-cover" />
-                     </div>
-                   ) : (
-                     <div className="w-full h-full bg-brand-pink flex items-center justify-center text-3xl font-bold text-brand-maroon">
-                        {session.user?.name?.charAt(0).toUpperCase()}
-                     </div>
-                   )}
-                 </div>
-                 <h2 className="text-xl font-bold text-brand-maroon mb-1">{session.user?.name}</h2>
-                 <p className="text-brand-maroon/60 text-sm mb-6">{session.user?.email}</p>
-                 
-                 <div className="space-y-2">
-                    <button 
-                      onClick={() => {
-                        setActiveTab("profile");
-                      }}
-                      className="w-full py-2 px-4 rounded-xl border border-brand-maroon/20 text-brand-maroon font-medium hover:bg-brand-maroon/5 transition-colors flex items-center justify-center gap-2"
-                    >
-                       <UserIcon className="h-4 w-4" /> Edit Profile
-                    </button>
-                    <button 
-                      onClick={() => setActiveTab("orders")}
-                      className={cn(
-                        "w-full py-2 px-4 rounded-xl font-medium transition-colors flex items-center justify-center gap-2 border",
-                        activeTab === "orders" ? "bg-brand-maroon text-white border-brand-maroon" : "bg-white text-brand-maroon border-brand-maroon/20 hover:bg-brand-maroon/5"
-                      )}
-                    >
-                       <Package className="h-4 w-4" /> My Orders
-                    </button>
-                 </div>
+    <>
+      <UserSidebar />
+
+      <div className="ml-64 min-h-screen bg-brand-beige/20 pt-16 pb-16">
+        <div className="p-8">
+          <div className="max-w-6xl mx-auto">
+            <div className="mb-8 flex justify-between items-center">
+              <div>
+                <h1 className="text-4xl font-bold text-brand-maroon mb-2">My Orders</h1>
+                <p className="text-lg text-brand-maroon/60">View and manage your order history</p>
               </div>
+              <span className="px-4 py-2 bg-brand-pink text-brand-maroon text-xs font-bold uppercase tracking-widest rounded-full">
+              </span>
             </div>
 
-            {/* Main Content */}
-            <div className="w-full md:w-2/3">
-              <AnimatePresence mode="wait">
-                {activeTab === "orders" ? (
-                  <motion.div
-                    key="orders"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                  >
-                    <h1 className="text-3xl font-bold text-brand-maroon mb-6 font-outfit">Order History</h1>
-                    {loadingOrders ? (
-                      <div className="space-y-4">
-                        {[1, 2].map(i => (
-                          <div key={i} className="bg-white h-40 rounded-2xl animate-pulse" />
-                        ))}
+            {loadingOrders ? (
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="bg-white h-40 rounded-2xl animate-pulse" />
+                ))}
+              </div>
+            ) : orders.length === 0 ? (
+              <div className="bg-white rounded-[2.5rem] p-16 text-center border border-brand-maroon/5">
+                <Package className="h-24 w-24 mx-auto text-brand-pink/20 mb-6" />
+                <h3 className="text-2xl font-bold text-brand-maroon mb-2">No orders yet</h3>
+                <p className="text-brand-maroon/60 mb-6">Start shopping to see your orders here</p>
+                <Link
+                  href="/shop"
+                  className="inline-flex items-center gap-2 px-8 py-4 bg-brand-maroon text-white font-bold rounded-2xl hover:bg-brand-maroon/90 transition-all"
+                >
+                  <Package className="h-5 w-5" />
+                  Start Shopping
+                </Link>
+              </div>
+            ) : (
+              <div className="space-y-4">
+                {orders.map((order) => (
+                  <div key={order._id} className="bg-white rounded-2xl p-6 border border-brand-maroon/5 shadow-sm hover:shadow-md transition-shadow">
+                    <div className="flex items-start justify-between mb-4">
+                      <div>
+                        <span className="text-xs font-bold text-brand-maroon/60 uppercase tracking-widest">Order #{order.shortOrderId}</span>
+                        <p className="text-sm text-brand-maroon/40 mt-1">
+                          {new Date(order.createdAt).toLocaleDateString()} at {new Date(order.createdAt).toLocaleTimeString()}
+                        </p>
                       </div>
-                    ) : orders.length === 0 ? (
-                      <div className="bg-white p-12 rounded-2xl shadow-sm border border-brand-maroon/5 text-center">
-                        <Package className="h-12 w-12 mx-auto text-brand-maroon/20 mb-4" />
-                        <h3 className="text-xl font-bold text-brand-maroon mb-2">No orders yet</h3>
-                        <p className="text-brand-maroon/60 mb-6">Looks like you haven&apos;t purchased anything yet.</p>
-                        <Link href="/shop" className="inline-block bg-brand-maroon text-white px-6 py-3 rounded-xl font-bold hover:bg-brand-maroon/90 transition-colors">
-                            Start Shopping
+                      <div className="flex items-center gap-2">
+                        <button
+                          onClick={() => downloadInvoice(order.shortOrderId)}
+                          className="p-2 rounded-lg hover:bg-brand-pink/20 text-brand-maroon/60 hover:text-brand-maroon transition-all"
+                          title="Download Invoice"
+                        >
+                          <Download className="h-5 w-5" />
+                        </button>
+                        <Link
+                          href={`/order-tracking?orderId=${order.shortOrderId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="p-2 rounded-lg hover:bg-brand-pink/20 text-brand-maroon/60 hover:text-brand-maroon transition-all"
+                          title="Track Order"
+                        >
+                          <ExternalLink className="h-5 w-5" />
                         </Link>
                       </div>
-                    ) : (
-                      <div className="space-y-6">
-                        {orders.map((order) => (
-                          <div key={order._id} className="bg-white p-6 rounded-2xl shadow-sm border border-brand-maroon/5 hover:shadow-md transition-shadow">
-                            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-4 pb-4 border-b border-brand-maroon/5 gap-4">
-                                <div>
-                                  <p className="text-xs text-brand-maroon/40 font-bold uppercase tracking-wider mb-1">Order ID</p>
-                                  <p className="font-mono text-sm font-bold text-brand-maroon">#{order._id.slice(-6)}</p>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-brand-maroon/40 font-bold uppercase tracking-wider mb-1">Date</p>
-                                  <div className="flex items-center text-sm font-medium text-brand-maroon">
-                                      <Calendar className="h-3 w-3 mr-1" />
-                                      {new Date(order.createdAt).toLocaleDateString()}
-                                  </div>
-                                </div>
-                                <div>
-                                  <p className="text-xs text-brand-maroon/40 font-bold uppercase tracking-wider mb-1">Status</p>
-                                  <span className={`px-3 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${
-                                    order.status === 'delivered' ? 'bg-green-100 text-green-700' :
-                                    order.status === 'shipping' ? 'bg-blue-100 text-blue-700' :
-                                    'bg-yellow-100 text-yellow-700'
-                                  }`}>
-                                      {order.status}
-                                  </span>
-                                </div>
-                                <div className="text-right">
-                                  <p className="text-xs text-brand-maroon/40 font-bold uppercase tracking-wider mb-1">Total</p>
-                                  <p className="font-bold text-brand-maroon">৳{order.total}</p>
-                                </div>
-                            </div>
+                    </div>
 
-                            <div className="space-y-3">
-                                {order.items.map((item, idx) => (
-                                  <div key={idx} className="flex items-center gap-4">
-                                      <div className="relative h-12 w-12 bg-brand-pink/20 rounded-lg overflow-hidden shrink-0">
-                                        <Image src={item.image} alt={item.name} fill className="object-cover" />
-                                      </div>
-                                      <div className="flex-1">
-                                        <p className="font-bold text-brand-maroon text-sm">{item.name}</p>
-                                        <p className="text-xs text-brand-maroon/60">Qty: {item.quantity} × ৳{item.price}</p>
-                                      </div>
-                                  </div>
-                                ))}
-                            </div>
+                    <div className="flex flex-wrap gap-2 mb-4">
+                      {order.items.slice(0, 4).map((item, idx) => (
+                        <div key={idx} className="h-16 w-16 rounded-xl overflow-hidden bg-white shadow-sm border-2 border-white">
+                          <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                        </div>
+                      ))}
+                      {order.items.length > 4 && (
+                        <div className="h-16 w-16 rounded-xl bg-white/50 flex items-center justify-center text-brand-maroon/60 font-bold text-sm border-2 border-white">
+                          +{order.items.length - 4}
+                        </div>
+                      )}
+                    </div>
 
-                            <div className="mt-6 flex flex-wrap items-center justify-between gap-4 border-t border-brand-maroon/5 pt-4">
-                                <div className="flex items-center gap-2">
-                                  <p className="text-xs font-bold text-brand-maroon/40 uppercase">Payment:</p>
-                                  <span className={cn(
-                                    "text-xs font-bold px-2 py-0.5 rounded-md",
-                                    order.paymentStatus === "paid" ? "bg-green-50 text-green-600" : "bg-red-50 text-red-600"
-                                  )}>
-                                    {order.paymentStatus}
-                                  </span>
-                                </div>
-                                <Link href={`/order-tracking?id=${order._id}`} className="text-sm font-bold text-brand-maroon hover:underline flex items-center">
-                                    Details & Invoice <MapPin className="h-3 w-3 ml-1" />
-                                </Link>
-                            </div>
-                          </div>
-                        ))}
+                    <div className="flex items-center justify-between pt-4 border-t border-brand-maroon/10">
+                      <div className="flex items-center gap-2">
+                        <span className={cn(
+                          "px-3 py-1 rounded-full text-xs font-bold uppercase",
+                          getStatusColor(order.status)
+                        )}>
+                          {order.status}
+                        </span>
+                        <span className={cn(
+                          "px-3 py-1 rounded-full text-xs font-bold uppercase",
+                          order.paymentStatus === "paid" ? "bg-green-100 text-green-700" : "bg-red-100 text-red-700"
+                        )}>
+                          {order.paymentStatus}
+                        </span>
                       </div>
-                    )}
-                  </motion.div>
-                ) : (
-                  <motion.div
-                    key="profile"
-                    initial={{ opacity: 0, x: 20 }}
-                    animate={{ opacity: 1, x: 0 }}
-                    exit={{ opacity: 0, x: -20 }}
-                    className="bg-white p-8 rounded-2xl shadow-sm border border-brand-maroon/5"
-                  >
-                    <h2 className="text-2xl font-bold text-brand-maroon mb-8 font-outfit">Profile Settings</h2>
-                    
-                    <form onSubmit={handleUpdateProfile} className="space-y-6 max-w-lg">
-                      <div className="space-y-2">
-                        <label className="text-sm font-bold text-brand-maroon">Display Name</label>
-                        <input 
-                          value={newName}
-                          onChange={(e) => setNewName(e.target.value)}
-                          className="w-full p-3 rounded-xl border border-brand-maroon/10 focus:border-brand-maroon outline-none"
-                        />
+                      <div className="text-right">
+                        <p className="text-xs text-brand-maroon/40">Total</p>
+                        <p className="text-xl font-bold text-brand-maroon">৳{order.total}</p>
                       </div>
-                      
-                      <div className="space-y-2">
-                        <label className="text-sm font-bold text-brand-maroon">Profile Image URL</label>
-                        <input 
-                          value={newImage}
-                          onChange={(e) => setNewImage(e.target.value)}
-                          placeholder="https://images.com/user.jpg"
-                          className="w-full p-3 rounded-xl border border-brand-maroon/10 focus:border-brand-maroon outline-none"
-                        />
-                        <p className="text-[10px] text-brand-maroon/40">Paste a link to your profile picture.</p>
-                      </div>
-
-                      <button 
-                        type="submit"
-                        disabled={updateLoading}
-                        className="bg-brand-maroon text-white font-bold px-8 py-3 rounded-xl hover:bg-brand-maroon/90 transition-all flex items-center gap-2 disabled:opacity-50"
-                      >
-                        {updateLoading && <Loader2 className="h-4 w-4 animate-spin" />}
-                        Save Changes
-                      </button>
-                    </form>
-                  </motion.div>
-                )}
-              </AnimatePresence>
-            </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
           </div>
-        </motion.div>
+        </div>
       </div>
-    </div>
+    </>
   );
 }

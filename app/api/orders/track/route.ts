@@ -12,24 +12,21 @@ export async function GET(request: Request) {
       return NextResponse.json({ error: "Search query required" }, { status: 400 });
     }
 
-    let order;
+    console.log("Searching for order with query:", query);
 
-    if (query.length < 24) {
-      order = await Order.findOne({
-        _id: { $regex: query + '$' }
-      }).select(
-        "_id status items total createdAt trackingLink shippingAddress userName userEmail"
-      );
-    } else {
-      order = await Order.findById(query).select(
-        "_id status items total createdAt trackingLink shippingAddress userName userEmail"
-      );
-    }
+    // Search by shortOrderId (case-insensitive)
+    const order = await Order.findOne({
+      shortOrderId: { $regex: `^${query}`, $options: 'i' }
+    }).select(
+      "_id shortOrderId status items total createdAt trackingLink shippingAddress userName userEmail"
+    );
 
     if (!order) {
+      console.log("Order not found for query:", query);
       return NextResponse.json({ error: "Order not found" }, { status: 404 });
     }
 
+    console.log("Order found:", order.shortOrderId);
     return NextResponse.json(order);
   } catch (error) {
     console.error("Failed to search orders:", error);

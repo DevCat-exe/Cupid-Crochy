@@ -78,3 +78,5 @@ Deliver a pixel-perfect, responsive e-commerce site that mirrors the existing Vi
 - **Order Tracking**: Search order by ID, interactive timeline, download invoice.
 - **Product Reviews**: Submit star ratings and comments (authenticated), average rating auto-calculated.
 - **Premium UI**: HSL-based brand colors, glassmorphism, Framer Motion transitions.
+
+stripe listen --forward-to localhost:3000/api/webhook/stripe

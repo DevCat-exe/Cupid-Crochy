@@ -11,11 +11,13 @@ const cookie = Cookie({
   weight: "400",
   subsets: ["latin"],
   variable: "--font-cookie",
+  display: "swap",
 });
 
 const outfit = Outfit({
   subsets: ["latin"],
   variable: "--font-outfit",
+  display: "swap",
 });
 
 export const metadata: Metadata = {

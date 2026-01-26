@@ -9,6 +9,7 @@ export interface IOrderItem {
 }
 
 export interface IOrder extends Document {
+  shortOrderId: string;
   userId: mongoose.Types.ObjectId;
   userName: string;
   userEmail: string;
@@ -42,6 +43,7 @@ const OrderItemSchema: Schema = new Schema({
 
 const OrderSchema: Schema = new Schema(
   {
+    shortOrderId: { type: String, required: true, unique: true },
     userId: { type: Schema.Types.ObjectId, ref: "User" },
     userName: { type: String, required: true },
     userEmail: { type: String, required: true },

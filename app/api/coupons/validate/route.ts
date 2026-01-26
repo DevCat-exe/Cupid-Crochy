@@ -41,10 +41,10 @@ export async function POST(request: Request) {
     if (coupon.discountType === "percentage") {
       discountAmount = (orderAmount * coupon.discount) / 100;
     } else {
-      discountAmount = coupon.discount;
+      discountAmount = Math.min(coupon.discount, orderAmount);
     }
 
-    const finalAmount = orderAmount - discountAmount;
+    const finalAmount = Math.max(0, orderAmount - discountAmount);
 
     return NextResponse.json({
       code: coupon.code,

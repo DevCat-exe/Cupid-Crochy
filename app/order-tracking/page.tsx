@@ -14,7 +14,6 @@ import {
   Loader2
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { generateInvoice } from "@/lib/pdf-generator";
 import Image from "next/image";
 
 interface OrderItem {
@@ -27,6 +26,7 @@ interface OrderItem {
 
 interface Order {
   _id: string;
+  shortOrderId: string;
   userName: string;
   userEmail: string;
   items: OrderItem[];
@@ -43,6 +43,7 @@ export default function OrderTrackingPage() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState("");
+  const [downloadingInvoice, setDownloadingInvoice] = useState(false);
 
   useEffect(() => {
     const savedId = sessionStorage.getItem("latestOrderId");
@@ -63,6 +64,9 @@ export default function OrderTrackingPage() {
       }
       const data = await res.json();
       setOrder(data);
+      if (data?.shortOrderId) {
+        sessionStorage.setItem("latestOrderId", data.shortOrderId);
+      }
     } catch (err) {
       if (err instanceof Error) {
         setError(err.message);
@@ -83,6 +87,33 @@ export default function OrderTrackingPage() {
   ];
 
   const currentStepIndex = statusSteps.findIndex(s => s.id === (order?.status === "cancelled" ? "pending" : order?.status || "pending"));
+
+  const downloadInvoice = async () => {
+    if (!order) return;
+
+    setDownloadingInvoice(true);
+    try {
+      const response = await fetch(`/api/orders/invoice?id=${order.shortOrderId}`);
+      if (!response.ok) {
+        throw new Error('Failed to download invoice');
+      }
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `invoice-${order.shortOrderId}.pdf`;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Error downloading invoice:', error);
+      setError('Failed to download invoice. Please try again.');
+    } finally {
+      setDownloadingInvoice(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-brand-beige/20 py-20 px-4">
@@ -126,17 +157,20 @@ export default function OrderTrackingPage() {
           </div>
           <input
             type="text"
-            placeholder="Order ID (e.g. 65db...)"
+            placeholder="Order ID (e.g. ABC12345)"
             value={orderId}
             onChange={(e) => setOrderId(e.target.value)}
-            className="w-full bg-white rounded-4xl py-8 pl-16 pr-40 shadow-2xl border border-brand-maroon/5 focus:ring-4 focus:ring-brand-maroon/5 outline-none text-xl font-bold text-brand-maroon transition-all"
-          />
-          <button
-            disabled={loading}
-            className="absolute right-4 top-1/2 -translate-y-1/2 bg-brand-maroon text-white font-bold py-4 px-10 rounded-2xl hover:bg-brand-maroon/90 shadow-lg active:scale-95 transition-all flex items-center space-x-2 disabled:opacity-50"
-          >
-            {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><span>Track</span> <ArrowRight className="h-5 w-5" /></>}
-          </button>
+            className="w-full bg-white rounded-4xl py-8 pl-16 pr-40 shadow-2xl border border-brand-maroon/5 focus:ring-4 focus:ring-brand-maroon/20 outline-none text-xl font-bold text-brand-maroon transition-all text-brand-maroon placeholder:text-brand-maroon/40"
+            />
+            
+          {orderId && (
+            <button
+              disabled={loading}
+              className="absolute right-4 top-1/2 -translate-y-1/2 bg-brand-maroon text-white font-bold py-4 px-10 rounded-2xl hover:bg-brand-maroon/90 shadow-lg active:scale-95 transition-all flex items-center space-x-2 disabled:opacity-50"
+            >
+              {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : <><span>Track</span> <ArrowRight className="h-5 w-5" /></>}
+            </button>
+          )}
           
           {error && <p className="absolute -bottom-8 left-6 text-red-500 text-sm font-bold">{error}</p>}
         </motion.form>
@@ -234,10 +268,18 @@ export default function OrderTrackingPage() {
                         <div className="flex flex-col sm:flex-row items-center gap-4">
                           <span className="text-2xl font-bold text-brand-maroon">৳{order.total}</span>
                           <button 
-                            onClick={() => generateInvoice(order)}
-                            className="bg-brand-maroon text-white font-bold py-2 px-6 rounded-xl text-xs hover:bg-brand-maroon/90 shadow-md transition-all whitespace-nowrap"
+                            onClick={downloadInvoice}
+                            disabled={downloadingInvoice}
+                            className="bg-brand-maroon text-white font-bold py-2 px-6 rounded-xl text-xs hover:bg-brand-maroon/90 shadow-md transition-all whitespace-nowrap disabled:opacity-50 flex items-center gap-2"
                           >
-                            Download Invoice
+                            {downloadingInvoice ? (
+                              <>
+                                <Loader2 className="h-3 w-3 animate-spin" />
+                                <span>Downloading...</span>
+                              </>
+                            ) : (
+                              <span>Download Invoice</span>
+                            )}
                           </button>
                         </div>
                       </div>

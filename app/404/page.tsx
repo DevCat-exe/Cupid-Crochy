@@ -26,7 +26,7 @@ export default function Custom404() {
             Oops! Page Not Found
           </h2>
           <p className="text-lg text-brand-maroon/60">
-            The treasure you're looking for doesn't exist or has been moved.
+            The treasure you&apos;re looking for doesn&apos;t exist or has been moved.
           </p>
         </motion.div>
 

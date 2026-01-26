@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "seed": "tsx -r dotenv/config scripts/seed.ts"
+    "seed": "tsx -r dotenv/config scripts/seed.ts",
+    "clean": "rm -rf .next && rm -f tsconfig.tsbuildinfo"
   },
   "dependencies": {
     "@auth/mongodb-adapter": "^3.11.1",

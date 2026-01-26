@@ -1,21 +1,17 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  Search, 
-  Trash2, 
+import {
+  Search,
+  Trash2,
   Loader2,
-  X,
   User as UserIcon,
   ShieldCheck,
   ShieldAlert,
-  Shield,
-  MoreVertical,
   Mail,
   Calendar
 } from "lucide-react";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
 
 interface User {
   _id: string;
@@ -26,10 +22,11 @@ interface User {
   image?: string;
 }
 
-export default function UserManagementClient({ initialUsers }: { initialUsers: User[] }) {
+export default function UserManagementClient({ initialUsers, currentUserRole }: { initialUsers: User[]; currentUserRole: string }) {
   const [users, setUsers] = useState(initialUsers);
   const [searchQuery, setSearchQuery] = useState("");
   const [loading, setLoading] = useState<string | null>(null);
+  const isAdmin = currentUserRole === "admin";
 
   const filteredUsers = users.filter(u => 
     u.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -147,10 +144,13 @@ export default function UserManagementClient({ initialUsers }: { initialUsers: U
                   </td>
                   <td className="px-8 py-5">
                     <select
-                      disabled={loading === user._id}
+                      disabled={loading === user._id || !isAdmin}
                       value={user.role}
                       onChange={(e) => handleRoleUpdate(user._id, e.target.value)}
-                      className="bg-brand-pink/10 border-none rounded-xl px-4 py-2 text-xs font-bold text-brand-maroon cursor-pointer focus:ring-2 focus:ring-brand-maroon/20 transition-all outline-none"
+                      className={cn(
+                        "bg-brand-pink/10 border-none rounded-xl px-4 py-2 text-xs font-bold text-brand-maroon focus:ring-2 focus:ring-brand-maroon/20 transition-all outline-none",
+                        !isAdmin && "opacity-60 cursor-not-allowed"
+                      )}
                     >
                       <option value="user">Customer</option>
                       <option value="staff">Staff</option>
@@ -159,9 +159,12 @@ export default function UserManagementClient({ initialUsers }: { initialUsers: U
                   </td>
                   <td className="px-8 py-5 text-right">
                     <button
-                      disabled={loading === user._id}
+                      disabled={loading === user._id || !isAdmin}
                       onClick={() => handleDelete(user._id)}
-                      className="p-3 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm disabled:opacity-50"
+                      className={cn(
+                        "p-3 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm",
+                        (!isAdmin || loading === user._id) && "opacity-50 cursor-not-allowed"
+                      )}
                     >
                       {loading === user._id ? <Loader2 className="h-4 w-4 animate-spin" /> : <Trash2 className="h-4 w-4" />}
                     </button>

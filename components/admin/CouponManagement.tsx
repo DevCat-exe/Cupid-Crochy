@@ -1,18 +1,15 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  Plus, 
-  Search, 
-  Trash2, 
+import {
+  Plus,
+  Search,
+  Trash2,
   Loader2,
-  X,
-  Check,
   Tag,
   Calendar,
   Percent,
-  CircleDollarSign,
-  AlertCircle
+  CircleDollarSign
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";

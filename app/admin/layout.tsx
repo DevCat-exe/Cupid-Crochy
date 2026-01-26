@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import AdminSidebar from "@/components/admin/AdminSidebar";
+import { AuthSession } from "@/types/auth";
 
 export default async function AdminLayout({
   children,
@@ -10,7 +11,7 @@ export default async function AdminLayout({
 }) {
   const session = await getServerSession(authOptions);
 
-  if (!session || (session.user as any).role !== "admin") {
+  if (!session || ((session.user as any).role !== "admin" && (session.user as any).role !== "staff")) {
     redirect("/login");
     return null; // unreachable but satisfies TS
   }

@@ -1,8 +1,9 @@
 import jsPDF from "jspdf";
-import "jspdf-autotable";
+import { autoTable } from "jspdf-autotable";
 
 interface Order {
   _id: string;
+  shortOrderId: string;
   userName: string;
   userEmail: string;
   items: any[];
@@ -10,14 +11,16 @@ interface Order {
   status: string;
   createdAt: string;
   shippingAddress: any;
+  discountAmount?: number;
+  couponCode?: string;
 }
 
 export const generateInvoice = (order: Order) => {
   const doc = new jsPDF() as any;
 
   // Colors
-  const maroon = [91, 26, 26];
-  const pink = [245, 221, 235];
+  const maroon: [number, number, number] = [91, 26, 26];
+  const pink: [number, number, number] = [245, 221, 235];
 
   // Header - Brand
   doc.setFillColor(...maroon);
@@ -36,7 +39,7 @@ export const generateInvoice = (order: Order) => {
   // Order Details
   doc.setTextColor(50, 50, 50);
   doc.setFontSize(10);
-  doc.text(`Invoice ID: #${order._id.toUpperCase()}`, 20, 60);
+  doc.text(`Invoice ID: #${order.shortOrderId}`, 20, 60);
   doc.text(`Date: ${new Date(order.createdAt).toLocaleDateString()}`, 20, 66);
   doc.text(`Status: ${order.status.toUpperCase()}`, 20, 72);
 
@@ -60,7 +63,7 @@ export const generateInvoice = (order: Order) => {
     `৳${item.price * item.quantity}`
   ]);
 
-  doc.autoTable({
+  autoTable(doc, {
     startY: 140,
     head: [["Product", "Qty", "Price", "Total"]],
     body: tableData,
@@ -78,17 +81,35 @@ export const generateInvoice = (order: Order) => {
   const finalY = (doc as any).lastAutoTable.finalY + 10;
 
   // Summary
+  const subtotal = order.total;
+  const shipping = 50;
+  const discount = order.discountAmount || 0;
+  const total = subtotal - discount + shipping;
+
   doc.setFontSize(10);
   doc.text("Subtotal:", 140, finalY);
-  doc.text(`৳${order.total - 100}`, 175, finalY, { align: "right" });
+  doc.text(`৳${subtotal}`, 175, finalY, { align: "right" });
   
-  doc.text("Shipping:", 140, finalY + 7);
-  doc.text("৳100", 175, finalY + 7, { align: "right" });
-  
-  doc.setFontSize(12);
-  doc.setFont("helvetica", "bold");
-  doc.text("Total Paid:", 140, finalY + 17);
-  doc.text(`৳${order.total}`, 175, finalY + 17, { align: "right" });
+  if (discount > 0) {
+    const discountLabel = order.couponCode ? `Coupon (${order.couponCode})` : "Discount";
+    doc.text(`${discountLabel}:`, 140, finalY + 7);
+    doc.text(`-৳${discount}`, 175, finalY + 7, { align: "right" });
+    doc.setFontSize(10);
+    doc.text("Shipping:", 140, finalY + 17);
+    doc.text("৳50", 175, finalY + 17, { align: "right" });
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("Total Paid:", 140, finalY + 27);
+    doc.text(`৳${total}`, 175, finalY + 27, { align: "right" });
+  } else {
+    doc.setFontSize(10);
+    doc.text("Shipping:", 140, finalY + 7);
+    doc.text("৳50", 175, finalY + 7, { align: "right" });
+    doc.setFontSize(12);
+    doc.setFont("helvetica", "bold");
+    doc.text("Total Paid:", 140, finalY + 17);
+    doc.text(`৳${subtotal + shipping}`, 175, finalY + 17, { align: "right" });
+  }
 
   // Footer
   doc.setFontSize(8);
@@ -97,5 +118,5 @@ export const generateInvoice = (order: Order) => {
   doc.text("Thank you for supporting our handcrafted creations!", 105, 280, { align: "center" });
   doc.text("Visit us at cupid-crochy.com", 105, 285, { align: "center" });
 
-  doc.save(`invoice-${order._id}.pdf`);
+  return Buffer.from(doc.output("arraybuffer"));
 };

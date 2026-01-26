@@ -35,9 +35,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "No items in cart" }, { status: 400 });
     }
 
-    // Calculate subtotal
+    // Calculate subtotal and shipping
     const subtotal = items.reduce((acc, item) => acc + item.price * item.quantity, 0);
+    const shipping = 50; // Fixed shipping cost
     let discountAmount = 0;
+    let stripeCouponId: string | undefined;
 
     // Validate coupon if provided
     if (couponCode) {
@@ -59,37 +61,46 @@ export async function POST(request: Request) {
           } else {
             discountAmount = coupon.discount;
           }
+
+          // Create temporary Stripe coupon for this discount
+          const stripeCoupon = await stripe.coupons.create({
+            amount_off: coupon.discountType === "fixed" ? Math.round(discountAmount * 100) : undefined,
+            percent_off: coupon.discountType === "percentage" ? coupon.discount : undefined,
+            currency: "bdt",
+            name: `${coupon.code} Discount`,
+            duration: "once",
+            max_redemptions: 1,
+          });
+          stripeCouponId = stripeCoupon.id;
         }
       }
     }
 
     // Prepare line items for Stripe
-    const line_items = items.map((item) => ({
-      price_data: {
-        currency: "bdt",
-        product_data: {
-          name: item.name,
-          images: [item.image],
-        },
-        unit_amount: Math.round(item.price * 100), // Stripe uses cents/poisha
-      },
-      quantity: item.quantity,
-    }));
-
-    // Add discount as a line item if applicable
-    if (discountAmount > 0) {
-      line_items.push({
+    const line_items = [
+      ...items.map((item) => ({
         price_data: {
           currency: "bdt",
           product_data: {
-            name: `Coupon Discount (${couponCode})`,
-            images: ["https://via.placeholder.com/150"],
+            name: item.name,
+            images: [item.image],
           },
-          unit_amount: -Math.round(discountAmount * 100),
+          unit_amount: Math.round(item.price * 100), // Stripe uses cents/poisha
+        },
+        quantity: item.quantity,
+      })),
+      // Add shipping as a separate line item
+      {
+        price_data: {
+          currency: "bdt",
+          product_data: {
+            name: "Shipping & Handling",
+          },
+          unit_amount: Math.round(shipping * 100),
         },
         quantity: 1,
-      } as any);
-    }
+      }
+    ];
 
     // Create Stripe Checkout Session
     const checkoutSession = await stripe.checkout.sessions.create({
@@ -102,11 +113,13 @@ export async function POST(request: Request) {
       shipping_address_collection: {
         allowed_countries: ["BD"], // Adjust to your target countries
       },
+      discounts: stripeCouponId ? [{ coupon: stripeCouponId }] : undefined,
       metadata: {
         userId: session.user.id || "guest",
         items: JSON.stringify(items.map((i) => ({ id: i.id, quantity: i.quantity }))),
         couponCode: couponCode || "",
         discountAmount: discountAmount.toString(),
+        shippingAmount: shipping.toString(),
       },
     });
 

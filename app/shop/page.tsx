@@ -25,9 +25,8 @@ interface Product {
   tags?: string[];
 }
 
-const CATEGORIES = ["All", "Tote", "Crossbody", "Bucket", "Clutch", "Shoulder", "Handbag"];
 const TAGS = [
-  "summer", "floral", "boho", "evening", "pastel", "vintage", "minimalist", 
+  "summer", "floral", "boho", "evening", "pastel", "vintage", "minimalist",
   "festival", "small", "medium", "large", "casual", "elegant", "pattern", "colorful"
 ];
 
@@ -42,6 +41,7 @@ export default function ShopPage() {
   const [searchQuery, setSearchQuery] = useState("");
   const [availabilityFilter, setAvailabilityFilter] = useState("all");
   const [showFilters, setShowFilters] = useState(false);
+  const [categories, setCategories] = useState<string[]>(["All"]);
 
   const { addToCart } = useCart();
 
@@ -53,6 +53,10 @@ export default function ShopPage() {
         const data = await res.json();
         setProducts(data);
         setFilteredProducts(data);
+
+        // Extract unique categories from products
+        const uniqueCategories = Array.from(new Set(data.map((p: Product) => p.category))).sort() as string[];
+        setCategories(["All", ...uniqueCategories]);
       } catch (error) {
         console.error("Failed to fetch products:", error);
       } finally {
@@ -149,8 +153,8 @@ export default function ShopPage() {
 
         <div className="flex flex-col md:flex-row gap-8">
           {/* Filters Sidebar - Desktop */}
-          <div className="hidden md:block w-64 shrink-0 space-y-8 sticky top-24 h-fit">
-            <div className="bg-white p-6 rounded-2xl shadow-sm border border-brand-maroon/5">
+          <div className="hidden md:block w-64 shrink-0 space-y-8 sticky top-32 h-fit overflow-y-auto max-h-[calc(100vh-8rem)] scrollbar-thin scrollbar-thumb-brand-maroon/20 scrollbar-track-transparent">
+            <div className="bg-white rounded-2xl border border-brand-maroon/5 p-6">
               {/* Category Filter */}
               <div className="mb-6">
                 <div className="flex justify-between items-center mb-4">
@@ -162,14 +166,14 @@ export default function ShopPage() {
                   )}
                 </div>
                 <div className="space-y-1">
-                  {CATEGORIES.map(cat => (
+                  {categories.map(cat => (
                     <button
                       key={cat}
                       onClick={() => setActiveCategory(cat)}
                       className={cn(
                         "w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                        activeCategory === cat 
-                          ? "bg-brand-maroon text-white" 
+                        activeCategory === cat
+                          ? "bg-brand-maroon text-white"
                           : "text-brand-maroon/70 hover:bg-brand-pink/20 hover:text-brand-maroon"
                       )}
                     >
@@ -193,8 +197,8 @@ export default function ShopPage() {
                       onClick={() => setAvailabilityFilter(opt.id)}
                       className={cn(
                         "w-full text-left px-3 py-2 rounded-lg text-sm font-medium transition-colors",
-                        availabilityFilter === opt.id 
-                          ? "bg-brand-maroon text-white" 
+                        availabilityFilter === opt.id
+                          ? "bg-brand-maroon text-white"
                           : "text-brand-maroon/70 hover:bg-brand-pink/20 hover:text-brand-maroon"
                       )}
                     >
@@ -225,7 +229,7 @@ export default function ShopPage() {
                 </div>
               </div>
             </div>
-          </div>
+           </div>
 
           {/* Filters - Mobile */}
           <AnimatePresence>
@@ -240,7 +244,7 @@ export default function ShopPage() {
                 <div className="mb-6">
                   <h3 className="font-bold text-brand-maroon mb-2">Categories</h3>
                   <div className="flex flex-wrap gap-2">
-                    {CATEGORIES.map(cat => (
+                    {categories.map(cat => (
                       <button
                         key={cat}
                         onClick={() => setActiveCategory(cat)}
@@ -335,43 +339,59 @@ export default function ShopPage() {
                           </div>
                         </Link>
 
-                        <div className="p-4 grow flex flex-col">
-                          <div className="flex justify-between items-start mb-2">
-                            <div>
-                              <h3 className="font-bold text-brand-maroon text-lg leading-tight line-clamp-1">
-                                {product.name}
-                              </h3>
-                              <p className="text-xs text-brand-maroon/60 font-medium uppercase tracking-wider mt-1">
-                                {product.category}
-                              </p>
-                            </div>
-                            <span className="font-bold text-brand-maroon whitespace-nowrap">
-                              ৳{product.price}
-                            </span>
-                          </div>
+                         <div className="p-4 grow flex flex-col">
+                           {/* Tags */}
+                           {product.tags && product.tags.length > 0 && (
+                             <div className="flex flex-wrap gap-2 mb-3">
+                               {product.tags.slice(0, 3).map(tag => (
+                                 <span key={tag} className="px-2 py-1 bg-brand-pink/30 text-brand-maroon/80 text-[10px] font-medium rounded-full capitalize">
+                                   {tag}
+                                 </span>
+                               ))}
+                               {product.tags.length > 3 && (
+                                 <span className="px-2 py-1 bg-brand-pink/20 text-brand-maroon/60 text-[10px] font-medium rounded-full">
+                                   +{product.tags.length - 3}
+                                 </span>
+                               )}
+                             </div>
+                           )}
 
-                          <div className="mt-auto pt-4 flex items-center justify-between border-t border-brand-maroon/5">
-                            <div className="flex items-center text-yellow-500 gap-1">
-                              <Star className="h-4 w-4 fill-current" />
-                              <span className="text-sm font-bold text-brand-maroon/70">
-                                {product.rating || "5.0"}
-                              </span>
-                            </div>
-                            <button
-                              disabled={product.isSoldOut}
-                              onClick={() => addToCart({
-                                id: product._id,
-                                name: product.name,
-                                price: product.price,
-                                image: product.images[0],
-                                quantity: 1
-                              })}
-                              className="p-2 rounded-lg bg-brand-pink/30 text-brand-maroon hover:bg-brand-maroon hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                              <ShoppingBag className="h-4 w-4" />
-                            </button>
-                          </div>
-                        </div>
+                           <div className="flex justify-between items-start mb-2">
+                             <div>
+                               <h3 className="font-bold text-brand-maroon text-lg leading-tight line-clamp-1">
+                                 {product.name}
+                               </h3>
+                               <p className="text-xs text-brand-maroon/60 font-medium uppercase tracking-wider mt-1">
+                                 {product.category}
+                               </p>
+                             </div>
+                             <span className="font-bold text-brand-maroon whitespace-nowrap">
+                               ৳{product.price}
+                             </span>
+                           </div>
+
+                           <div className="mt-auto pt-4 flex items-center justify-between border-t border-brand-maroon/5">
+                             <div className="flex items-center text-yellow-500 gap-1">
+                               <Star className="h-4 w-4 fill-current" />
+                               <span className="text-sm font-bold text-brand-maroon/70">
+                                 {product.rating || "5.0"}
+                               </span>
+                             </div>
+                             <button
+                               disabled={product.isSoldOut}
+                               onClick={() => addToCart({
+                                 id: product._id,
+                                 name: product.name,
+                                 price: product.price,
+                                 image: product.images[0],
+                                 quantity: 1
+                               })}
+                               className="p-2 rounded-lg bg-brand-pink/30 text-brand-maroon hover:bg-brand-maroon hover:text-white transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                             >
+                               <ShoppingBag className="h-4 w-4" />
+                             </button>
+                           </div>
+                         </div>
                       </div>
                     </motion.div>
                   ))}

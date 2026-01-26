@@ -6,6 +6,8 @@ import Product from "@/models/Product";
 import Payment from "@/models/Payment";
 import Coupon from "@/models/Coupon";
 import { Resend } from "resend";
+import { generateInvoice } from "@/lib/pdf-generator";
+import { generateShortOrderId } from "@/lib/shortOrderId";
 
 if (!process.env.STRIPE_SECRET_KEY) throw new Error("Missing STRIPE_SECRET_KEY");
 
@@ -101,6 +103,7 @@ export async function POST(req: Request) {
 
       // Create the order
       const order = await Order.create({
+        shortOrderId: generateShortOrderId(),
         userId: userId === "guest" ? undefined : userId,
         userName: session.customer_details?.name || "Guest",
         userEmail: session.customer_details?.email || "guest@example.com",
@@ -143,35 +146,182 @@ export async function POST(req: Request) {
 
       console.log("Payment record created successfully");
 
-      // Send confirmation email
+      // Send confirmation email with invoice PDF
       try {
+        const pdfBuffer = await generateInvoice(order);
+        const base64Attachment = pdfBuffer.toString("base64");
+
         await resend.emails.send({
           from: "Cupid Crochy <onboarding@resend.dev>",
           to: session.customer_details?.email || "",
-          subject: `Your Cupid Crochy Order Confirmation (#${order._id.toString().slice(-6).toUpperCase()})`,
+          subject: `Order Confirmed - #${order._id.toString().slice(-6).toUpperCase()} | Cupid Crochy`,
           html: `
-            <div style="font-family: sans-serif; max-width: 600px; margin: auto; padding: 20px; border: 1px solid #eee; border-radius: 10px;">
-              <h1 style="color: #5B1A1A; text-align: center;">Thank You for Your Order!</h1>
-              <p>Hi ${session.customer_details?.name},</p>
-              <p>We've received your order and we're getting it ready for shipment.</p>
-              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-              <h3>Order Summary</h3>
-              ${orderItems.map(item => `
-                <div style="display: flex; justify-content: space-between; margin-bottom: 10px;">
-                  <span>${item.name} (x${item.quantity})</span>
-                  <span>৳${item.price * item.quantity}</span>
-                </div>
-              `).join('')}
-              <div style="display: flex; justify-content: space-between; font-weight: bold; margin-top: 20px; border-top: 2px solid #5B1A1A; pt: 10px;">
-                <span>Total</span>
-                <span>৳${order.total}</span>
-              </div>
-              <hr style="border: none; border-top: 1px solid #eee; margin: 20px 0;" />
-              <p style="font-size: 12px; color: #666; text-align: center;">
-                Handcrafted with love by Cupid Crochy.
-              </p>
-            </div>
+            <!DOCTYPE html>
+            <html>
+            <head>
+              <meta charset="utf-8">
+              <meta name="viewport" content="width=device-width, initial-scale=1.0">
+              <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+            </head>
+            <body style="margin: 0; padding: 0; font-family: 'Outfit', sans-serif; background-color: #F5F0E6;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto;">
+                <!-- Header -->
+                <tr>
+                  <td style="background: linear-gradient(135deg, #5B1A1A 0%, #7A2535 100%); padding: 40px 30px; text-align: center;">
+                    <h1 style="margin: 0; color: #F5F0E6; font-size: 28px; font-weight: 700; letter-spacing: 2px;">
+                      CUPID CROCHY
+                    </h1>
+                    <p style="margin: 10px 0 0 0; color: rgba(245, 240, 230, 0.9); font-size: 14px; font-weight: 300;">
+                      Handcrafted with Love
+                    </p>
+                  </td>
+                </tr>
+
+                <!-- Main Content -->
+                <tr>
+                  <td style="background: #ffffff; padding: 50px 30px;">
+                    <!-- Thank You Section -->
+                    <div style="text-align: center; margin-bottom: 40px;">
+                      <div style="display: inline-block; background: #FFB6C1; padding: 15px 30px; border-radius: 50px; margin-bottom: 20px;">
+                        <span style="font-size: 48px;">🎉</span>
+                      </div>
+                      <h2 style="margin: 0 0 15px 0; color: #5B1A1A; font-size: 24px; font-weight: 600;">
+                        Order Confirmed!
+                      </h2>
+                      <p style="margin: 0; color: #666; font-size: 16px;">
+                        Hi <strong>${session.customer_details?.name || "there"}</strong>!
+                      </p>
+                      <p style="margin: 10px 0 0 0; color: #666; font-size: 15px; line-height: 1.6;">
+                        Thank you for your order. We're thrilled to begin crafting your hand treasures! Your order <strong>#${order._id.toString().slice(-6).toUpperCase()}</strong> has been received and is being prepared.
+                      </p>
+                    </div>
+
+                    <!-- Order Details Card -->
+                    <table width="100%" cellpadding="0" cellspacing="0" style="background: #FDF8F6; border-radius: 16px; padding: 30px; margin-bottom: 30px; border: 2px solid #FFB6C1;">
+                      <tr>
+                        <td>
+                          <h3 style="margin: 0 0 20px 0; color: #5B1A1A; font-size: 18px; font-weight: 600;">
+                            📦 Order Details
+                          </h3>
+                          <table width="100%" cellpadding="8" cellspacing="0">
+                            <tr>
+                              <td width="50%" style="color: #666; font-size: 14px; padding-bottom: 12px;">
+                                <strong>Order ID:</strong><br>
+                                <span style="color: #5B1A1A;">#${order._id.toString().slice(-6).toUpperCase()}</span>
+                              </td>
+                              <td width="50%" style="color: #666; font-size: 14px; padding-bottom: 12px;">
+                                <strong>Date:</strong><br>
+                                <span style="color: #5B1A1A;">${new Date(order.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                              </td>
+                            </tr>
+                            <tr>
+                              <td width="50%" style="color: #666; font-size: 14px; padding-bottom: 12px;">
+                                <strong>Status:</strong><br>
+                                <span style="color: #5B1A1A; background: #FFF3E0; padding: 4px 12px; border-radius: 20px; font-size: 13px; font-weight: 500;">${order.status.toUpperCase()}</span>
+                              </td>
+                              <td width="50%" style="color: #666; font-size: 14px; padding-bottom: 12px;">
+                                <strong>Payment:</strong><br>
+                                <span style="color: #5B1A1A;">${order.paymentStatus.toUpperCase()}</span>
+                              </td>
+                            </tr>
+                          </table>
+                        </td>
+                      </tr>
+                    </table>
+
+                    <!-- Items Table -->
+                    <div style="background: #fff; border: 1px solid #E8D8CF; border-radius: 12px; overflow: hidden; margin-bottom: 30px;">
+                      <table width="100%" cellpadding="15" cellspacing="0">
+                        <tr style="background: linear-gradient(135deg, #5B1A1A 0%, #7A2535 100%);">
+                          <th style="color: #F5F0E6; font-size: 13px; font-weight: 600; text-align: left; padding: 15px;">Item</th>
+                          <th style="color: #F5F0E6; font-size: 13px; font-weight: 600; text-align: center; padding: 15px;">Qty</th>
+                          <th style="color: #F5F0E6; font-size: 13px; font-weight: 600; text-align: right; padding: 15px;">Price</th>
+                          <th style="color: #F5F0E6; font-size: 13px; font-weight: 600; text-align: right; padding: 15px;">Total</th>
+                        </tr>
+                        ${orderItems.map(item => `
+                        <tr style="border-bottom: 1px solid #F5F0E6;">
+                          <td style="color: #333; font-size: 15px; padding: 15px;">
+                            <strong>${item.name}</strong>
+                          </td>
+                          <td style="color: #666; font-size: 15px; text-align: center; padding: 15px;">x${item.quantity}</td>
+                          <td style="color: #666; font-size: 15px; text-align: right; padding: 15px;">৳${item.price}</td>
+                          <td style="color: #5B1A1A; font-size: 15px; font-weight: 600; text-align: right; padding: 15px;">৳${item.price * item.quantity}</td>
+                        </tr>
+                        `).join('')}
+                        ${couponCode && discountAmount > 0 ? `
+                        <tr>
+                          <td colspan="3" style="color: #E74C3C; font-size: 14px; padding: 15px; font-weight: 500;">
+                            💸 Coupon Discount (${couponCode})
+                          </td>
+                          <td colspan="2" style="color: #E74C3C; font-size: 15px; font-weight: 600; text-align: right; padding: 15px;">-৳${discountAmount}</td>
+                        </tr>
+                        ` : ''}
+                        <tr style="background: #FDF8F6;">
+                          <td colspan="3" style="color: #5B1A1A; font-size: 15px; font-weight: 600; padding: 15px;">Subtotal</td>
+                          <td colspan="2" style="color: #5B1A1A; font-size: 15px; font-weight: 600; text-align: right; padding: 15px;">৳${(order.total + (discountAmount || 0))}</td>
+                        </tr>
+                        <tr>
+                          <td colspan="3" style="color: #666; font-size: 14px; padding: 15px;">Shipping</td>
+                          <td colspan="2" style="color: #666; font-size: 15px; text-align: right; padding: 15px;">৳50</td>
+                        </tr>
+                        <tr style="background: linear-gradient(135deg, #5B1A1A 0%, #7A2535 100%);">
+                          <td colspan="3" style="color: #F5F0E6; font-size: 18px; font-weight: 600; padding: 20px;">Total Paid</td>
+                          <td colspan="2" style="color: #F5F0E6; font-size: 22px; font-weight: 700; text-align: right; padding: 20px;">৳${order.total}</td>
+                        </tr>
+                      </table>
+                    </div>
+
+                    <!-- Shipping Address -->
+                    <div style="background: #FFF9F5; border-radius: 16px; padding: 30px; border: 2px solid #FFB6C1;">
+                      <h3 style="margin: 0 0 20px 0; color: #5B1A1A; font-size: 18px; font-weight: 600;">
+                        📍 Shipping Address
+                      </h3>
+                      <p style="margin: 0; color: #333; font-size: 15px; line-height: 1.6;">
+                        ${session.customer_details?.name}<br>
+                        ${order.shippingAddress.line1}<br>
+                        ${order.shippingAddress.line2 ? order.shippingAddress.line2 + '<br>' : ''}
+                        ${order.shippingAddress.city}, ${order.shippingAddress.state}<br>
+                        ${order.shippingAddress.country}, ${order.shippingAddress.postalCode}
+                      </p>
+                    </div>
+
+                    <!-- Invoice Download CTA -->
+                    <div style="text-align: center; margin: 30px 0;">
+                      <p style="margin: 0 0 15px 0; color: #666; font-size: 14px;">
+                        Your detailed invoice has been attached to this email. You can also download it anytime from your account.
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+
+                <!-- Footer -->
+                <tr>
+                  <td style="background: #5B1A1A; padding: 40px 30px; text-align: center;">
+                    <p style="margin: 0 0 15px 0; color: #F5F0E6; font-size: 16px; font-weight: 600;">
+                      Need Help?
+                    </p>
+                    <p style="margin: 0; color: rgba(245, 240, 230, 0.8); font-size: 14px; line-height: 1.6;">
+                      We're here for you! Reach out to us at:<br>
+                      <a href="mailto:support@cupidcrochy.com" style="color: #FFB6C1; text-decoration: none; font-weight: 500;">support@cupidcrochy.com</a>
+                    </p>
+                    <div style="margin-top: 30px; padding-top: 30px; border-top: 1px solid rgba(245, 240, 230, 0.2);">
+                      <p style="margin: 0; color: rgba(245, 240, 230, 0.6); font-size: 12px;">
+                        💝 Handcrafted with love by Cupid Crochy<br>
+                        <a href="https://cupidcrochy.com" style="color: #FFB6C1; text-decoration: none;">www.cupidcrochy.com</a>
+                      </p>
+                    </div>
+                  </td>
+                </tr>
+              </table>
+            </body>
+            </html>
           `,
+          attachments: [
+            {
+              filename: `invoice-${order._id}.pdf`,
+              content: base64Attachment,
+            }
+          ]
         });
       } catch (emailErr) {
         console.error("Failed to send order confirmation email:", emailErr);

@@ -29,7 +29,7 @@ export default function ContactPage() {
             transition={{ duration: 0.5, delay: 0.1 }}
             className="text-lg text-brand-maroon/70 max-w-2xl mx-auto font-outfit"
           >
-            We'd love to hear from you! Reach out with any questions,
+            We&apos;d love to hear from you! Reach out with any questions,
             comments, or custom order inquiries.
           </motion.p>
         </div>

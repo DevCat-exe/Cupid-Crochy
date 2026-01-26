@@ -1,19 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { 
-  Plus, 
-  Search, 
-  Pencil, 
-  Trash2, 
+import {
+  Plus,
+  Search,
+  Pencil,
+  Trash2,
   ExternalLink,
   Loader2,
   X,
-  Check,
-  AlertCircle
+  Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
+import { useToast } from "@/components/providers/ToastProvider";
 
 interface Product {
   _id: string;
@@ -27,12 +27,15 @@ interface Product {
   description: string;
 }
 
-export default function ProductManagementClient({ initialProducts }: { initialProducts: Product[] }) {
+export default function ProductManagementClient({ initialProducts, currentUserRole }: { initialProducts: Product[]; currentUserRole: string }) {
   const [products, setProducts] = useState(initialProducts);
   const [searchQuery, setSearchQuery] = useState("");
+  const [loading, setLoading] = useState(false);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
-  const [loading, setLoading] = useState(false);
+  const isAdmin = currentUserRole === "admin";
+  const { success } = useToast();
+
 
   // Form State
   const [formData, setFormData] = useState({
@@ -148,7 +151,11 @@ export default function ProductManagementClient({ initialProducts }: { initialPr
 
         <button
           onClick={() => { resetForm(); setIsModalOpen(true); }}
-          className="bg-brand-maroon text-white font-bold px-8 py-4 rounded-2xl shadow-xl hover:shadow-brand-maroon/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center space-x-2"
+          disabled={!isAdmin}
+          className={cn(
+            "font-bold px-8 py-4 rounded-2xl shadow-xl hover:shadow-brand-maroon/20 hover:scale-[1.02] active:scale-95 transition-all flex items-center space-x-2",
+            isAdmin ? "bg-brand-maroon text-white" : "bg-gray-300 text-gray-500 cursor-not-allowed"
+          )}
         >
           <Plus className="h-5 w-5" />
           <span>Add New Product</span>
@@ -177,11 +184,18 @@ export default function ProductManagementClient({ initialProducts }: { initialPr
                       <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover transition-transform group-hover:scale-110" />
                     </div>
                     <div className="flex flex-col">
-                      <span className="font-bold text-brand-maroon text-sm leading-tight">{product.name}</span>
-                      <span className="text-[10px] text-brand-maroon/40 font-bold uppercase tracking-wider mt-1 flex items-center">
-                        <ExternalLink className="h-2 w-2 mr-1" />
-                        ID: {product._id.toString().slice(-6)}
-                      </span>
+                       <span className="font-bold text-brand-maroon text-sm leading-tight">{product.name}</span>
+                       <span className="text-[10px] text-brand-maroon/40 font-bold uppercase tracking-wider mt-1 flex items-center">
+                         <a 
+                           href={`/product/${product._id}`} 
+                           target="_blank"
+                           rel="noopener noreferrer"
+                           className="hover:underline flex items-center gap-1"
+                         >
+                           <ExternalLink className="h-2 w-2 mr-1" />
+                           ID: {product._id.toString().slice(-6)}
+                         </a>
+                       </span>
                     </div>
                   </div>
                 </td>
@@ -214,13 +228,21 @@ export default function ProductManagementClient({ initialProducts }: { initialPr
                   <div className="flex items-center justify-end space-x-2">
                     <button
                       onClick={() => handleEdit(product)}
-                      className="p-2.5 rounded-xl bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white transition-all shadow-sm"
+                      disabled={!isAdmin}
+                      className={cn(
+                        "p-2.5 rounded-xl hover:shadow-sm transition-all shadow-sm",
+                        isAdmin ? "bg-blue-50 text-blue-600 hover:bg-blue-600 hover:text-white" : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      )}
                     >
                       <Pencil className="h-4 w-4" />
                     </button>
                     <button
                       onClick={() => handleDelete(product._id)}
-                      className="p-2.5 rounded-xl bg-red-50 text-red-600 hover:bg-red-600 hover:text-white transition-all shadow-sm"
+                      disabled={!isAdmin}
+                      className={cn(
+                        "p-2.5 rounded-xl hover:shadow-sm transition-all shadow-sm",
+                        isAdmin ? "bg-red-50 text-red-600 hover:bg-red-600 hover:text-white" : "bg-gray-100 text-gray-400 cursor-not-allowed"
+                      )}
                     >
                       <Trash2 className="h-4 w-4" />
                     </button>

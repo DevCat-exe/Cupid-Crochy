@@ -19,6 +19,7 @@ interface Product {
   category: string;
   stock: number;
   rating: number;
+  tags?: string[];
   reviews: { user: string; rating: number; comment: string; createdAt: string }[];
 }
 
@@ -115,13 +116,22 @@ export default function ProductDetailPage() {
               animate={{ opacity: 1, x: 0 }}
               className="space-y-6"
             >
-              <div>
-                <span className="text-xs font-bold text-brand-maroon/40 uppercase tracking-[0.2em] mb-2 block">
-                  {product.category}
-                </span>
-                <h1 className="text-4xl lg:text-5xl font-bold text-brand-maroon leading-tight mb-4">
-                  {product.name}
-                </h1>
+               <div>
+                 <span className="text-xs font-bold text-brand-maroon/40 uppercase tracking-[0.2em] mb-2 block">
+                   {product.category}
+                 </span>
+                 <h1 className="text-4xl lg:text-5xl font-bold text-brand-maroon leading-tight mb-4">
+                   {product.name}
+                 </h1>
+                 {product.tags && product.tags.length > 0 && (
+                   <div className="flex flex-wrap gap-2 mb-4">
+                     {product.tags.map(tag => (
+                       <span key={tag} className="px-3 py-1 bg-brand-pink/30 text-brand-maroon/80 text-sm font-medium rounded-full capitalize border border-brand-maroon/10">
+                         {tag}
+                       </span>
+                     ))}
+                   </div>
+                 )}
                 <div className="flex items-center space-x-4">
                   <div className="flex items-center text-yellow-500">
                     {[...Array(5)].map((_, i) => (

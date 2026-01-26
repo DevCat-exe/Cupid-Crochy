@@ -4,82 +4,53 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession } from "next-auth/react";
 import { 
-  LayoutDashboard, 
-  Package, 
   ShoppingBag, 
+  Heart, 
+  CreditCard, 
+  User, 
   Settings, 
   LogOut, 
-  Home,
-  Tag,
-  Users,
-  CreditCard
+  Home
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { signOut } from "next-auth/react";
 
-const ADMIN_NAV_ITEMS = [
+const USER_NAV_ITEMS = [
   {
-    label: "Dashboard",
-    href: "/admin",
-    icon: LayoutDashboard,
-    roles: ["admin", "staff"],
-  },
-  {
-    label: "Products",
-    href: "/admin/products",
-    icon: Package,
-    roles: ["admin"],
-  },
-  {
-    label: "Orders",
-    href: "/admin/orders",
+    label: "My Orders",
+    href: "/dashboard",
     icon: ShoppingBag,
-    roles: ["admin", "staff"],
   },
   {
-    label: "Payments",
-    href: "/admin/payments",
+    label: "My Wishlist",
+    href: "/dashboard/wishlist",
+    icon: Heart,
+  },
+  {
+    label: "Payment History",
+    href: "/dashboard/payments",
     icon: CreditCard,
-    roles: ["admin"],
   },
   {
-    label: "Coupons",
-    href: "/admin/coupons",
-    icon: Tag,
-    roles: ["admin"],
-  },
-  {
-    label: "Users",
-    href: "/admin/users",
-    icon: Users,
-    roles: ["admin", "staff"],
-  },
-  {
-    label: "Settings",
-    href: "/admin/settings",
+    label: "Profile Settings",
+    href: "/dashboard/settings",
     icon: Settings,
-    roles: ["admin"],
   },
 ];
 
-export default function AdminSidebar() {
+export default function UserSidebar() {
   const pathname = usePathname();
-  const { data: session } = useSession();
-  const userRole = (session?.user as any)?.role;
 
   return (
     <div className="w-64 bg-brand-maroon h-screen fixed left-0 top-0 text-brand-beige flex flex-col shadow-2xl z-50">
       <div className="p-8">
         <h1 className="text-2xl font-cookie text-white">Cupid Crochy</h1>
-        <p className="text-[10px] uppercase tracking-[0.2em] text-brand-pink/60 font-bold mt-1">Management Portal</p>
+        <p className="text-[10px] uppercase tracking-[0.2em] text-brand-pink/60 font-bold mt-1">My Account</p>
       </div>
 
       <nav className="flex-1 px-4 py-8 space-y-2 grow overflow-y-auto custom-scrollbar">
-        {ADMIN_NAV_ITEMS.map((item) => {
+        {USER_NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href;
-          const hasAccess = item.roles.includes(userRole);
-          
-          if (!hasAccess) return null;
 
           return (
             <Link
