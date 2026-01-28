@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight } from "lucide-react";
 
 export default function HeroBanner() {
@@ -64,10 +65,12 @@ export default function HeroBanner() {
         transition={{ delay: 0.3, duration: 1.2, ease: "easeOut" }}
       >
         <div className="relative w-full h-full">
-          <img
+          <Image
             src={settings.heroImage}
             alt="Featured crochet bag"
-            className="w-full h-full object-cover object-center rounded-tl-[4rem] shadow-[-20px_0_40px_rgba(0,0,0,0.1)]"
+            fill
+            className="object-cover object-center rounded-tl-[4rem] shadow-[-20px_0_40px_rgba(0,0,0,0.1)]"
+            priority
           />
           <div className="absolute inset-0 bg-gradient-to-t from-brand-maroon/10 to-transparent pointer-events-none rounded-tl-[4rem]" />
         </div>

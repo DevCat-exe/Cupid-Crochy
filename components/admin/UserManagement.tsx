@@ -6,11 +6,13 @@ import {
   Trash2,
   Loader2,
   User as UserIcon,
+  Shield,
   ShieldCheck,
   ShieldAlert,
   Mail,
   Calendar
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 interface User {
@@ -45,7 +47,7 @@ export default function UserManagementClient({ initialUsers, currentUserRole }: 
       if (!res.ok) throw new Error("Failed to update role");
       const updatedUser = await res.json();
       setUsers(users.map(u => u._id === id ? updatedUser : u));
-    } catch (err) {
+    } catch {
       alert("Error updating user");
     } finally {
       setLoading(null);
@@ -59,7 +61,7 @@ export default function UserManagementClient({ initialUsers, currentUserRole }: 
       const res = await fetch(`/api/users/${id}`, { method: "DELETE" });
       if (!res.ok) throw new Error("Failed to delete");
       setUsers(users.filter(u => u._id !== id));
-    } catch (err) {
+    } catch {
       alert("Error deleting user");
     } finally {
       setLoading(null);
@@ -109,9 +111,9 @@ export default function UserManagementClient({ initialUsers, currentUserRole }: 
                 <tr key={user._id} className="hover:bg-brand-pink/5 transition-colors group">
                   <td className="px-8 py-5">
                     <div className="flex items-center space-x-4">
-                      <div className="h-12 w-12 rounded-full overflow-hidden bg-brand-pink/20 flex items-center justify-center shrink-0 border-2 border-white shadow-sm">
+                        <div className="h-12 w-12 rounded-full overflow-hidden bg-brand-pink/20 flex items-center justify-center shrink-0 border-2 border-white shadow-sm relative">
                         {user.image ? (
-                          <img src={user.image} alt={user.name} className="h-full w-full object-cover" />
+                          <Image src={user.image} alt={user.name} fill className="object-cover" />
                         ) : (
                           <UserIcon className="h-6 w-6 text-brand-maroon/40" />
                         )}

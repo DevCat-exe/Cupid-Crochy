@@ -13,7 +13,7 @@ interface ToastContextType {
     messages: {
       loading: string;
       success: string | ((data: T) => string);
-      error: string | ((error: any) => string);
+      error: string | ((error: Error) => string);
     }
   ) => Promise<T>;
 }

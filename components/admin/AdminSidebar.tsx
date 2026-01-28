@@ -65,7 +65,7 @@ const ADMIN_NAV_ITEMS = [
 export default function AdminSidebar() {
   const pathname = usePathname();
   const { data: session } = useSession();
-  const userRole = (session?.user as any)?.role;
+  const userRole = (session?.user as { role?: string })?.role;
 
   return (
     <div className="w-64 bg-brand-maroon h-screen fixed left-0 top-0 text-brand-beige flex flex-col shadow-2xl z-50">
@@ -77,7 +77,7 @@ export default function AdminSidebar() {
       <nav className="flex-1 px-4 py-8 space-y-2 grow overflow-y-auto custom-scrollbar">
         {ADMIN_NAV_ITEMS.map((item) => {
           const isActive = pathname === item.href;
-          const hasAccess = item.roles.includes(userRole);
+          const hasAccess = userRole && item.roles.includes(userRole);
           
           if (!hasAccess) return null;
 

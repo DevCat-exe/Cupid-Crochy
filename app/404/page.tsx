@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { Home, Search, ShoppingBag, ArrowRight } from "lucide-react";
+import { Home, Search, ShoppingBag } from "lucide-react";
 import { motion } from "framer-motion";
 
 export default function Custom404() {

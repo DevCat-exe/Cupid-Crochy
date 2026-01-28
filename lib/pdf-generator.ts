@@ -6,17 +6,27 @@ interface Order {
   shortOrderId: string;
   userName: string;
   userEmail: string;
-  items: any[];
+  items: Array<{
+    name: string;
+    quantity: number;
+    price: number;
+  }>;
   total: number;
   status: string;
   createdAt: string;
-  shippingAddress: any;
+  shippingAddress: {
+    line1?: string;
+    city: string;
+    state: string;
+    country: string;
+    postalCode: string;
+  };
   discountAmount?: number;
   couponCode?: string;
 }
 
 export const generateInvoice = (order: Order) => {
-  const doc = new jsPDF() as any;
+  const doc = new jsPDF() as jsPDF & { lastAutoTable: { finalY: number } };
 
   // Colors
   const maroon: [number, number, number] = [91, 26, 26];
@@ -56,7 +66,7 @@ export const generateInvoice = (order: Order) => {
   doc.text(`${order.shippingAddress.country}, ${order.shippingAddress.postalCode}`, 20, 122);
 
   // Items Table
-  const tableData = order.items.map((item: any) => [
+  const tableData = order.items.map((item) => [
     item.name,
     item.quantity.toString(),
     `৳${item.price}`,
@@ -78,7 +88,7 @@ export const generateInvoice = (order: Order) => {
     }
   });
 
-  const finalY = (doc as any).lastAutoTable.finalY + 10;
+  const finalY = doc.lastAutoTable.finalY + 10;
 
   // Summary
   const subtotal = order.total;

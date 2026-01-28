@@ -13,7 +13,7 @@ export async function PUT(request: Request) {
     }
 
     const { name, image } = await request.json();
-    const userId = (session.user as any).id;
+    const userId = (session.user as { id: string }).id;
 
     await connectDB();
     

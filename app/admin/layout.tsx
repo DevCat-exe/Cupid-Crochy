@@ -9,9 +9,9 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await getServerSession(authOptions);
+  const session = await getServerSession(authOptions) as AuthSession | null;
 
-  if (!session || ((session.user as any).role !== "admin" && (session.user as any).role !== "staff")) {
+  if (!session || (session.user.role !== "admin" && session.user.role !== "staff")) {
     redirect("/login");
     return null; // unreachable but satisfies TS
   }
@@ -29,7 +29,7 @@ export default async function AdminLayout({
           <div className="flex items-center space-x-4">
             <div className="text-right">
               <p className="text-sm font-bold text-brand-maroon">{session.user?.name}</p>
-              <p className="text-[10px] font-bold text-brand-maroon/40 uppercase tracking-widest">{(session.user as any).role}</p>
+              <p className="text-[10px] font-bold text-brand-maroon/40 uppercase tracking-widest">{session.user.role}</p>
             </div>
             <div className="h-10 w-10 rounded-full bg-brand-pink border-2 border-brand-maroon/10 flex items-center justify-center text-brand-maroon font-bold">
               {session.user?.name?.[0]}

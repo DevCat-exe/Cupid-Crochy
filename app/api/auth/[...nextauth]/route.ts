@@ -83,11 +83,12 @@ export const authOptions: NextAuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, trigger, session }) {
-      // On initial sign in
-      if (user) {
+  // On initial sign in
+  if (user) {
         token.role = user.role || "user";
-        token.id = user.id;
-      }
+        const uid = (user as { _id?: string; id?: string })._id ?? (user as { _id?: string; id?: string }).id;
+        token.id = uid || undefined;
+  }
 
       // If we're updating the session (e.g. from the dashboard profile update)
       if (trigger === "update" && session) {

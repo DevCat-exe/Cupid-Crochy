@@ -1,7 +1,15 @@
 import connectDB from "@/lib/mongodb";
 import Payment from "@/models/Payment";
-import { CreditCard, DollarSign, TrendingUp, CheckCircle2, XCircle, Clock } from "lucide-react";
+import { DollarSign, TrendingUp, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
+
+interface PaymentType {
+  _id: string;
+  orderId?: string;
+  amount: number;
+  status: string;
+  createdAt: string;
+}
 
 async function getPaymentStats() {
   await connectDB();
@@ -10,7 +18,7 @@ async function getPaymentStats() {
     Payment.countDocuments(),
     Payment.countDocuments({ status: "succeeded" }),
     Payment.countDocuments({ status: "failed" }),
-    Payment.find().sort({ createdAt: -1 }).limit(10),
+    Payment.find().sort({ createdAt: -1 }).limit(10).lean(),
   ]);
 
   const totalRevenue = payments.reduce((acc, payment) => acc + (payment.amount || 0), 0);
@@ -24,7 +32,7 @@ async function getPaymentStats() {
     pendingPayments,
     refundedPayments,
     totalRevenue,
-    recentPayments: payments.slice(0, 10),
+    recentPayments: JSON.parse(JSON.stringify(payments)) as PaymentType[],
   };
 }
 
@@ -116,7 +124,7 @@ export default async function PaymentsPage() {
                 <td colSpan={5} className="px-8 py-10 text-center text-brand-maroon/40 italic">No payments yet</td>
               </tr>
             ) : (
-              stats.recentPayments.map((payment: any) => (
+              stats.recentPayments.map((payment) => (
                 <tr key={payment._id} className="hover:bg-brand-pink/5 transition-colors group">
                   <td className="px-8 py-5 font-bold text-brand-maroon text-sm">{payment._id.toString().slice(-6).toUpperCase()}</td>
                   <td className="px-8 py-5 font-bold text-brand-maroon text-sm">

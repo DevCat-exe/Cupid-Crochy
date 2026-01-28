@@ -30,10 +30,10 @@ export async function POST(request: Request) {
     });
 
     return NextResponse.json(JSON.parse(JSON.stringify(coupon)), { status: 201 });
-  } catch (error: any) {
+  } catch (error: unknown) {
     console.error("Error creating coupon:", error);
     return NextResponse.json(
-      { error: error.message || "Failed to create coupon" },
+      { error: error instanceof Error ? error.message : "Failed to create coupon" },
       { status: 500 }
     );
   }

@@ -21,7 +21,7 @@ export async function POST(request: Request) {
     // Role will default to 'user' in the schema
     const hashedPassword = await bcrypt.hash(password, 12);
 
-    const user = await User.create({
+    await User.create({
       name,
       email,
       password: hashedPassword,

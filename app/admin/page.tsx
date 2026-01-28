@@ -6,11 +6,28 @@ import {
   ShoppingBag, 
   Package, 
   DollarSign, 
-  Users, 
   TrendingUp,
   Clock
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
+
+interface OrderType {
+  _id: string;
+  userName: string;
+  userEmail: string;
+  total: number;
+  status: string;
+  createdAt: string;
+}
+
+interface ProductType {
+  _id: string;
+  name: string;
+  price: number;
+  category: string;
+  images: string[];
+}
 
 async function getStats() {
   await connectDB();
@@ -19,13 +36,13 @@ async function getStats() {
     Order.countDocuments(),
     Product.countDocuments(),
     User.countDocuments(),
-    Order.find().sort({ createdAt: -1 }).limit(10),
+    Order.find().sort({ createdAt: -1 }).limit(10).lean(),
   ]);
 
   const totalRevenue = orders.reduce((acc, order) => acc + (order.total || 0), 0);
   const pendingOrders = await Order.countDocuments({ status: { $in: ["pending", "processing"] } });
   
-  const recentProducts = await Product.find().sort({ createdAt: -1 }).limit(5);
+  const recentProducts = await Product.find().sort({ createdAt: -1 }).limit(5).lean();
 
   return {
     totalOrders,
@@ -33,8 +50,8 @@ async function getStats() {
     totalUsers,
     totalRevenue,
     pendingOrders,
-    recentOrders: orders.slice(0, 5),
-    recentProducts
+    recentOrders: JSON.parse(JSON.stringify(orders.slice(0, 5))) as OrderType[],
+    recentProducts: JSON.parse(JSON.stringify(recentProducts)) as ProductType[]
   };
 }
 
@@ -77,7 +94,7 @@ export default async function AdminDashboard() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {cards.map((card, i) => (
-          <div key={i} className="bg-white p-8 rounded-[2rem] border border-brand-maroon/5 shadow-sm hover:shadow-xl transition-all duration-500 group">
+          <div key={i} className="bg-white p-8 rounded-4xl border border-brand-maroon/5 shadow-sm hover:shadow-xl transition-all duration-500 group">
             <div className="flex justify-between items-start mb-4">
               <div className={cn("p-4 rounded-2xl transition-transform group-hover:scale-110", card.color)}>
                 <card.icon className="h-6 w-6" />
@@ -119,7 +136,7 @@ export default async function AdminDashboard() {
                     <td colSpan={4} className="px-8 py-10 text-center text-brand-maroon/40 italic">No orders yet</td>
                   </tr>
                 ) : (
-                  stats.recentOrders.map((order: any) => (
+                  stats.recentOrders.map((order) => (
                     <tr key={order._id} className="hover:bg-brand-pink/5 transition-colors group">
                       <td className="px-8 py-5 font-bold text-brand-maroon text-sm">#{order._id.toString().slice(-6).toUpperCase()}</td>
                       <td className="px-8 py-5">
@@ -159,10 +176,10 @@ export default async function AdminDashboard() {
             ) : (
               stats.recentProducts.map((product) => (
                 <div key={product._id} className="flex items-center space-x-4 p-4 rounded-2xl hover:bg-brand-pink/10 transition-colors group">
-                  <div className="h-16 w-16 rounded-xl overflow-hidden bg-brand-pink/20 shrink-0 shadow-lg">
-                    <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover transition-transform group-hover:scale-110" />
+                  <div className="h-16 w-16 rounded-xl overflow-hidden bg-brand-pink/20 shrink-0 shadow-lg relative">
+                    <Image src={product.images[0]} alt={product.name} fill className="object-cover transition-transform group-hover:scale-110" />
                   </div>
-                  <div className="flex-grow">
+                  <div className="grow">
                     <h4 className="font-bold text-brand-maroon text-sm line-clamp-1">{product.name}</h4>
                     <p className="text-[10px] font-bold text-brand-maroon/40 uppercase tracking-widest">{product.category}</p>
                     <p className="font-bold text-brand-maroon text-sm mt-1">৳{product.price}</p>

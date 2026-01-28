@@ -40,11 +40,11 @@ export async function GET(request: Request) {
         'Content-Disposition': `attachment; filename="invoice-${order.shortOrderId}.pdf"`,
       },
     });
-  } catch (error: any) {
-    console.error("Failed to generate invoice:", error);
-    console.error("Error stack:", error?.stack);
+  } catch (error: unknown) {
+console.error("Failed to generate invoice:", error);
+    console.error("Error stack:", error instanceof Error ? error.stack : 'No stack available');
     return NextResponse.json(
-      { error: "Internal Server Error", details: error?.message },
+      { error: "Internal Server Error", details: error instanceof Error ? error.message : 'Unknown error' },
       { status: 500 }
     );
   }

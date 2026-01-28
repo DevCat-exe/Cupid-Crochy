@@ -12,14 +12,12 @@ import {
   Loader2,
   Lock,
   Mail,
-  Eye,
-  EyeOff
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useToast } from "@/components/providers/ToastProvider";
 
 export default function SettingsPage() {
-  const { success, error, loading: toastLoading } = useToast();
+  const { success, loading: toastLoading } = useToast();
   const [isLoading, setIsLoading] = useState(false);
   const [activeTab, setActiveTab] = useState("general");
 
@@ -34,7 +32,7 @@ export default function SettingsPage() {
     e.preventDefault();
     setIsLoading(true);
 
-    const savePromise = new Promise((resolve, reject) => {
+    const savePromise = new Promise((resolve) => {
       setTimeout(() => {
         setIsLoading(false);
         resolve("Settings saved successfully!");

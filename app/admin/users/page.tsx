@@ -4,6 +4,8 @@ import UserManagementClient from "@/components/admin/UserManagement";
 import { getServerSession } from "next-auth/next";
 import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 
+import { AuthSession } from "@/types/auth";
+
 export const dynamic = "force-dynamic";
 
 async function getUsers() {
@@ -13,8 +15,8 @@ async function getUsers() {
 }
 
 export default async function AdminUsersPage() {
-  const session = await getServerSession(authOptions);
-  const currentUserRole = (session?.user as any)?.role;
+  const session = await getServerSession(authOptions) as AuthSession | null;
+  const currentUserRole = session?.user?.role;
   const users = await getUsers();
 
   return (

@@ -11,7 +11,6 @@ import {
   Percent,
   CircleDollarSign
 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/components/providers/ToastProvider";
 import { Modal } from "@/components/ui/Modal";
@@ -90,8 +89,8 @@ export default function CouponManagementClient({ initialCoupons }: { initialCoup
         validUntil: ""
       });
       success("Coupon created successfully!");
-    } catch (err: any) {
-      error(err.message);
+    } catch (err) {
+      error((err as Error).message);
     } finally {
       setLoading(false);
     }
@@ -104,8 +103,8 @@ export default function CouponManagementClient({ initialCoupons }: { initialCoup
       if (!res.ok) throw new Error("Failed to delete");
       setCoupons(coupons.filter(c => c._id !== id));
       success("Coupon deleted successfully!");
-    } catch (err: any) {
-      error(err.message);
+    } catch (err) {
+      error((err as Error).message);
     }
   };
 
@@ -226,7 +225,7 @@ export default function CouponManagementClient({ initialCoupons }: { initialCoup
               <label className="text-[10px] font-bold text-brand-maroon/60 uppercase tracking-widest pl-1">Type</label>
               <select
                 value={formData.discountType}
-                onChange={(e) => setFormData({ ...formData, discountType: e.target.value as any })}
+                onChange={(e) => setFormData({ ...formData, discountType: e.target.value as "percentage" | "fixed" })}
                 className="w-full bg-brand-pink/10 border border-brand-maroon/5 rounded-2xl py-4 px-6 focus:ring-2 focus:ring-brand-maroon/20 outline-none transition-all text-brand-maroon font-bold appearance-none"
               >
                 <option value="percentage">Percentage %</option>

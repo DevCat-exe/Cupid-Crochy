@@ -12,6 +12,7 @@ import {
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/components/providers/CartProvider";
+import Image from "next/image";
 
 interface Product {
   _id: string;
@@ -51,12 +52,18 @@ export default function ShopPage() {
         setLoading(true);
         const res = await fetch("/api/products");
         const data = await res.json();
-        setProducts(data);
-        setFilteredProducts(data);
+        if (Array.isArray(data)) {
+          setProducts(data);
+          setFilteredProducts(data);
 
-        // Extract unique categories from products
-        const uniqueCategories = Array.from(new Set(data.map((p: Product) => p.category))).sort() as string[];
-        setCategories(["All", ...uniqueCategories]);
+          // Extract unique categories from products
+          const uniqueCategories = Array.from(new Set(data.map((p: Product) => p.category))).sort() as string[];
+          setCategories(["All", ...uniqueCategories]);
+        } else {
+          console.error("API returned invalid data:", data);
+          setProducts([]);
+          setFilteredProducts([]);
+        }
       } catch (error) {
         console.error("Failed to fetch products:", error);
       } finally {
@@ -310,14 +317,16 @@ export default function ShopPage() {
                     >
                       <div className="group relative bg-white rounded-2xl border border-brand-maroon/5 shadow-sm hover:shadow-xl transition-all duration-300 overflow-hidden h-full flex flex-col">
                         <Link href={`/product/${product._id}`} className="relative aspect-4/5 overflow-hidden bg-brand-pink/20">
-                          <img
+                          <Image
                             src={product.images[0]}
                             alt={product.name}
+                            fill
                             className={cn(
                               "w-full h-full object-cover transition-transform duration-700 group-hover:scale-110",
                               product.isSoldOut && "grayscale opacity-80"
                             )}
                           />
+
                           {product.isNewProduct && (
                             <span className="absolute top-3 left-3 bg-brand-maroon text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full">
                               New

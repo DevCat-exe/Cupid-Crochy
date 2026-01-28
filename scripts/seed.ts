@@ -7,7 +7,7 @@ import Coupon from "@/models/Coupon";
 import bcrypt from "bcryptjs";
 import dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config({ path: ".env.local" });
 
 const MONGODB_URI = process.env.MONGODB_URI || "mongodb://localhost:27017/cupid-crochy";
 
@@ -19,6 +19,20 @@ function generateShortOrderId(): string {
     result += chars.charAt(Math.floor(Math.random() * chars.length));
   }
   return result;
+}
+
+// Generate random date within last 90 days
+function randomDate(daysBack: number = 90): Date {
+  const now = new Date('2026-01-28');
+  const pastDate = new Date(now.getTime() - (Math.random() * daysBack * 24 * 60 * 60 * 1000));
+  return pastDate;
+}
+
+// Generate future date for coupons
+function futureDate(daysForward: number = 30): Date {
+  const now = new Date('2026-01-28');
+  const future = new Date(now.getTime() + (daysForward * 24 * 60 * 60 * 1000));
+  return future;
 }
 
 const seedData = async () => {
@@ -41,7 +55,7 @@ const seedData = async () => {
     const staffPassword = await bcrypt.hash("staff123", 10);
     const userPassword = await bcrypt.hash("user123", 10);
 
-    const admin = await User.create({
+    await User.create({
       name: "Admin User",
       email: "admin@cupidcrochy.com",
       password: adminPassword,
@@ -49,7 +63,7 @@ const seedData = async () => {
       image: "https://api.dicebear.com/7.x/avataaars/svg?seed=admin",
     });
 
-    const staff = await User.create({
+    await User.create({
       name: "Staff Member",
       email: "staff@cupidcrochy.com",
       password: staffPassword,
@@ -106,12 +120,15 @@ const seedData = async () => {
         price: 2800,
         stock: 15,
         category: "Crossbody",
+        rating: 4.7,
         tags: ["floral", "handmade", "everyday", "summer"],
         images: [
           "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=800&q=80",
           "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800&q=80",
         ],
-        features: ["100% Cotton", "Handmade", "Adjustable Strap", "Lined Interior"],
+        isNewProduct: true,
+        isSoldOut: false,
+        createdAt: randomDate(30),
       },
       {
         name: "Cozy Crochet Scarf",
@@ -119,12 +136,15 @@ const seedData = async () => {
         price: 1500,
         stock: 25,
         category: "Accessories",
+        rating: 4.5,
         tags: ["winter", "warm", "cozy", "accessories"],
         images: [
           "https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?w=800&q=80",
           "https://images.unsplash.com/photo-1523779917675-b6ed3a42a561?w=800&q=80",
         ],
-        features: ["Soft Wool", "Winter Collection", "One Size Fits All"],
+        isNewProduct: false,
+        isSoldOut: false,
+        createdAt: randomDate(60),
       },
       {
         name: "Crochet Bunny Plush",
@@ -132,11 +152,89 @@ const seedData = async () => {
         price: 1200,
         stock: 20,
         category: "Toys",
+        rating: 4.9,
         tags: ["cute", "gift", "toy", "handmade"],
         images: [
           "https://images.unsplash.com/photo-1585314062340-f1a5a7c9328d?w=800&q=80",
         ],
-        features: ["Safety Eyes", "Soft Yarn", "Machine Washable"],
+        isNewProduct: false,
+        isSoldOut: false,
+        createdAt: randomDate(45),
+      },
+      {
+        name: "Boho Tote Bag",
+        description: "Spacious tote bag with bohemian crochet patterns. Great for shopping, beach, or everyday use.",
+        price: 2200,
+        stock: 30,
+        category: "Tote",
+        rating: 4.6,
+        tags: ["boho", "summer", "large", "shopping"],
+        images: [
+          "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=800&q=80",
+        ],
+        isNewProduct: true,
+        isSoldOut: false,
+        createdAt: randomDate(15),
+      },
+      {
+        name: "Mini Coin Purse",
+        description: "Small and adorable coin purse perfect for carrying essentials.",
+        price: 800,
+        stock: 0,
+        category: "Purse",
+        rating: 4.3,
+        tags: ["small", "cute", "everyday", "accessories"],
+        images: [
+          "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800&q=80",
+        ],
+        isNewProduct: false,
+        isSoldOut: true,
+        createdAt: randomDate(20),
+      },
+      {
+        name: "Vintage Doily Set",
+        description: "Set of 3 handcrafted crochet doilies. Perfect for home decor.",
+        price: 1800,
+        stock: 18,
+        category: "Home Decor",
+        rating: 4.4,
+        tags: ["vintage", "home", "decor", "pattern"],
+        images: [
+          "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=800&q=80",
+        ],
+        isNewProduct: false,
+        isSoldOut: false,
+        createdAt: randomDate(70),
+      },
+      {
+        name: "Pastel Cardigan",
+        description: "Soft pastel-colored cardigan with crochet details. Perfect for layering.",
+        price: 3200,
+        stock: 12,
+        category: "Clothing",
+        rating: 4.8,
+        tags: ["pastel", "clothing", "cozy", "vintage"],
+        images: [
+          "https://images.unsplash.com/photo-1520903920243-00d872a2d1c9?w=800&q=80",
+        ],
+        isNewProduct: true,
+        isSoldOut: false,
+        createdAt: randomDate(10),
+      },
+      {
+        name: "Market String Bag",
+        description: "Classic string bag with crochet details. Roomy interior with secure closure.",
+        price: 2600,
+        stock: 22,
+        category: "String Bag",
+        rating: 4.2,
+        tags: ["minimalist", "everyday", "large", "shopping"],
+        images: [
+          "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=800&q=80",
+        ],
+        isNewProduct: false,
+        isSoldOut: false,
+        createdAt: randomDate(50),
       },
       {
         name: "Boho Tote Bag",
@@ -211,8 +309,8 @@ const seedData = async () => {
         discountType: "percentage",
         maxUses: 100,
         minOrderAmount: 500,
-        validFrom: new Date("2024-01-01"),
-        validUntil: new Date("2025-12-31"),
+        validFrom: new Date("2026-01-28"),
+        validUntil: futureDate(60),
         isActive: true,
         usageCount: 0,
       },
@@ -222,8 +320,19 @@ const seedData = async () => {
         discountType: "percentage",
         maxUses: 50,
         minOrderAmount: 2000,
-        validFrom: new Date("2024-06-01"),
-        validUntil: new Date("2024-08-31"),
+        validFrom: new Date("2026-02-01"),
+        validUntil: futureDate(120),
+        isActive: true,
+        usageCount: 0,
+      },
+      {
+        code: "SPECIAL15",
+        discount: 15,
+        discountType: "percentage",
+        maxUses: 75,
+        minOrderAmount: 1000,
+        validFrom: new Date("2026-01-28"),
+        validUntil: futureDate(90),
         isActive: true,
         usageCount: 0,
       },
@@ -473,7 +582,7 @@ const seedData = async () => {
     console.log("   Staff: staff@cupidcrochy.com / staff123");
     console.log("   User: sarah.johnson@example.com / user123");
     console.log("\n🛒 Example short order IDs:");
-    orders.forEach((order, i) => {
+    orders.forEach((order: { shortOrderId: string; status: string }) => {
       console.log(`   ${order.shortOrderId} - ${order.status}`);
     });
 

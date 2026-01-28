@@ -13,7 +13,7 @@ export async function GET() {
     }
 
     await connectDB();
-    const userId = (session.user as any).id;
+    const userId = (session.user as { id: string }).id;
 
     const [payments, orders] = await Promise.all([
       Payment.find({ userId }).sort({ createdAt: -1 }),

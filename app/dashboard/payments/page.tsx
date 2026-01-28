@@ -4,9 +4,7 @@ import { useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { CreditCard, CheckCircle2, XCircle, Clock, Loader2 } from "lucide-react";
-import { cn } from "@/lib/utils";
 import UserSidebar from "@/components/ui/UserSidebar";
-import { useToast } from "@/components/providers/ToastProvider";
 
 interface Payment {
   _id: string;
@@ -25,7 +23,7 @@ interface Order {
 }
 
 export default function UserPaymentsPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [payments, setPayments] = useState<Payment[]>([]);
   const [orders, setOrders] = useState<Order[]>([]);

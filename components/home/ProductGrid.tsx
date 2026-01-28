@@ -2,59 +2,68 @@
 
 import { motion } from "framer-motion";
 import Link from "next/link";
+import Image from "next/image";
 import { ArrowRight, Star } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { useEffect, useState } from "react";
 
 interface Product {
-  id: string;
+  _id: string;
   name: string;
   price: number;
-  image: string;
+  images: string[];
   category: string;
-  isNew?: boolean;
-  isSoldOut?: boolean;
-  rating?: number;
+  isNewProduct: boolean;
+  isSoldOut: boolean;
+  rating: number;
+  stock: number;
 }
 
-const defaultProducts: Product[] = [
-  {
-    id: "1",
-    name: "Daisy Tote Bag",
-    price: 3500,
-    image: "https://images.unsplash.com/photo-1590874103328-eac38a683ce7?w=800&q=80",
-    category: "Totes",
-    isNew: true,
-    rating: 4.8,
-  },
-  {
-    id: "2",
-    name: "Summer Crossbody",
-    price: 2800,
-    image: "https://images.unsplash.com/photo-1566150905458-1bf1fc113f0d?w=800&q=80",
-    category: "Crossbody",
-    rating: 4.5,
-  },
-  {
-    id: "3",
-    name: "Boho Bucket Bag",
-    price: 4200,
-    image: "https://images.unsplash.com/photo-1591561954557-26941169b49e?w=800&q=80",
-    category: "Buckets",
-    isSoldOut: true,
-    rating: 4.9,
-  },
-  {
-    id: "4",
-    name: "Pastel Shoulder Bag",
-    price: 3200,
-    image: "https://images.unsplash.com/photo-1575032617751-6ddec2089882?w=800&q=80",
-    category: "Shoulder",
-    isNew: true,
-    rating: 4.7,
-  },
-];
-
 export default function ProductGrid() {
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchProducts = async () => {
+      try {
+        const res = await fetch("/api/products?limit=8");
+        if (res.ok) {
+          const data = await res.json();
+          setProducts(data);
+        }
+      } catch (error) {
+        console.error("Error fetching products:", error);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchProducts();
+  }, []);
+
+  if (loading) {
+    return (
+      <section className="py-24 bg-white">
+        <div className="container mx-auto px-6">
+          <div className="text-center mb-16">
+            <h2 className="text-4xl md:text-5xl font-bold text-brand-maroon mb-4">
+              Loading Latest Creations...
+            </h2>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+            {[1, 2, 3, 4, 5, 6, 7, 8].map((i) => (
+              <div key={i} className="animate-pulse">
+                <div className="aspect-[3/4] bg-brand-pink/20 rounded-3xl mb-4"></div>
+                <div className="h-4 bg-brand-pink/20 rounded mb-2"></div>
+                <div className="h-3 bg-brand-pink/10 rounded w-3/4"></div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+    );
+  }
+
   return (
     <section className="py-24 bg-white">
       <div className="container mx-auto px-6">
@@ -79,26 +88,27 @@ export default function ProductGrid() {
         </div>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
-          {defaultProducts.map((product, index) => (
+          {products.map((product, index) => (
             <motion.div
-              key={product.id}
+              key={product._id}
               initial={{ opacity: 0, y: 30 }}
               whileInView={{ opacity: 1, y: 0 }}
               viewport={{ once: true }}
               transition={{ delay: index * 0.1, duration: 0.5 }}
             >
-              <Link href={`/product/${product.id}`} className="group block h-full">
+              <Link href={`/product/${product._id}`} className="group block h-full">
                 <div className="relative aspect-[3/4] overflow-hidden rounded-3xl bg-brand-pink/20 mb-4 shadow-lg group-hover:shadow-2xl transition-all duration-500">
-                  <img
-                    src={product.image}
+                  <Image
+                    src={product.images[0]}
                     alt={product.name}
+                    fill
                     className={cn(
-                      "w-full h-full object-cover object-center group-hover:scale-110 transition-transform duration-700",
+                      "object-cover object-center group-hover:scale-110 transition-transform duration-700",
                       product.isSoldOut && "opacity-60 grayscale-[50%]"
                     )}
                   />
                   
-                  {product.isNew && (
+                  {product.isNewProduct && (
                     <div className="absolute top-4 left-4 bg-brand-maroon text-white text-[10px] font-bold uppercase tracking-widest px-3 py-1 rounded-full shadow-lg">
                       New
                     </div>
@@ -129,10 +139,10 @@ export default function ProductGrid() {
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-xl text-brand-maroon">৳{product.price}</p>
-                      {product.rating && (
+                      {product.rating > 0 && (
                         <div className="flex items-center justify-end text-yellow-600 space-x-1">
                           <Star className="h-3 w-3 fill-current" />
-                          <span className="text-xs font-bold">{product.rating}</span>
+                          <span className="text-xs font-bold">{product.rating.toFixed(1)}</span>
                         </div>
                       )}
                     </div>

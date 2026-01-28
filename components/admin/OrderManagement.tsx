@@ -4,17 +4,11 @@ import { useState } from "react";
 import {
   Search,
   Eye,
-  Mail,
   Trash2,
-  Download,
   X,
-  Clock,
-  PackageCheck,
-  Truck,
-  CheckCircle2,
   Loader2,
 } from "lucide-react";
-import { cn } from "@/lib/utils";
+import Image from "next/image";
 
 interface OrderItem {
   productId: string;
@@ -88,14 +82,6 @@ export default function OrderManagement({
     }
   };
 
-  const contactCustomer = (order: Order) => {
-    const subject = encodeURIComponent(`Re: Your Order ${order.shortOrderId}`);
-    const body = encodeURIComponent(
-      `Hello ${order.userName},\n\nI'm writing regarding your order ${order.shortOrderId}.\n\nBest regards`
-    );
-    window.location.href = `mailto:${order.userEmail}?subject=${subject}&body=${body}`;
-  };
-
   const deleteOrder = async (id: string) => {
     if (!confirm("Are you sure you want to delete this order?")) {
       return;
@@ -117,21 +103,6 @@ export default function OrderManagement({
       alert("Order deleted successfully");
     } catch (error) {
       console.error("Error deleting order:", error);
-    }
-  };
-
-  const getStatusIcon = (status: string) => {
-    switch (status) {
-      case "pending":
-        return <Clock className="h-3 w-3" />;
-      case "processing":
-        return <PackageCheck className="h-3 w-3" />;
-      case "shipped":
-        return <Truck className="h-3 w-3" />;
-      case "delivered":
-        return <CheckCircle2 className="h-3 w-3" />;
-      default:
-        return null;
     }
   };
 
@@ -242,7 +213,7 @@ export default function OrderManagement({
 
       {/* Order Details Modal */}
       {isModalOpen && selectedOrder && (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+        <div className="fixed inset-0 z-100 flex items-center justify-center px-4">
           <div className="bg-white rounded-2xl max-w-2xl w-full">
             <div className="sticky top-0 bg-white p-6 flex items-center justify-between">
               <h3 className="text-xl font-bold text-brand-maroon">
@@ -293,10 +264,12 @@ export default function OrderManagement({
                   <div className="space-y-3">
                     {selectedOrder.items.map((item, idx) => (
                       <div key={idx} className="flex items-center gap-4 bg-brand-pink/10 p-4 rounded-2xl">
-                        <img
+                        <Image
                           src={item.image}
                           alt={item.name}
-                          className="h-16 w-16 rounded-xl object-cover"
+                          width={64}
+                          height={64}
+                          className="rounded-xl object-cover"
                         />
                         <div className="flex-1">
                           <p className="font-bold text-brand-maroon">{item.name}</p>

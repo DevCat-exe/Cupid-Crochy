@@ -3,7 +3,7 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Loader2, Package, Calendar, Download, ExternalLink, User as UserIcon } from "lucide-react";
+import { Loader2, Package, Download, ExternalLink } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
@@ -32,11 +32,6 @@ export default function DashboardPage() {
   const [loadingOrders, setLoadingOrders] = useState(true);
   const { success, error: toastError } = useToast();
 
-  const [activeTab, setActiveTab] = useState("orders");
-  const [newName, setNewName] = useState(session?.user?.name || "");
-  const [newImage, setNewImage] = useState(session?.user?.image || "");
-  const [updateLoading, setUpdateLoading] = useState(false);
-
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login");
@@ -46,8 +41,6 @@ export default function DashboardPage() {
   useEffect(() => {
     if (session?.user?.email) {
       fetchOrders();
-      setNewName(session.user.name || "");
-      setNewImage(session.user.image || "");
     }
   }, [session]);
 
@@ -85,27 +78,6 @@ export default function DashboardPage() {
     } catch (error) {
       console.error("Error downloading invoice:", error);
       toastError("Failed to download invoice");
-    }
-  };
-
-  const handleUpdateProfile = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setUpdateLoading(true);
-    try {
-       const res = await fetch("/api/users/profile", {
-          method: "PUT",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ name: newName, image: newImage }),
-       });
-       if (res.ok) {
-          router.refresh();
-          success("Profile updated successfully!");
-       }
-    } catch (error) {
-       console.error("Update failed", error);
-       toastError("Failed to update profile");
-    } finally {
-       setUpdateLoading(false);
     }
   };
 
@@ -197,8 +169,8 @@ export default function DashboardPage() {
 
                     <div className="flex flex-wrap gap-2 mb-4">
                       {order.items.slice(0, 4).map((item, idx) => (
-                        <div key={idx} className="h-16 w-16 rounded-xl overflow-hidden bg-white shadow-sm border-2 border-white">
-                          <img src={item.image} alt={item.name} className="h-full w-full object-cover" />
+                        <div key={idx} className="h-16 w-16 rounded-xl overflow-hidden bg-white shadow-sm border-2 border-white relative">
+                          <Image src={item.image} alt={item.name} fill className="object-cover" />
                         </div>
                       ))}
                       {order.items.length > 4 && (

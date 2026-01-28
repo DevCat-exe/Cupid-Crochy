@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Star, MessageSquare, Send, Loader2, User } from "lucide-react";
 import { useSession } from "next-auth/react";
 import { cn } from "@/lib/utils";
-import { motion, AnimatePresence } from "framer-motion";
+import { motion } from "framer-motion";
 
 interface Review {
   user: string;
@@ -45,8 +45,8 @@ export default function ProductReviews({ productId, initialReviews, initialRatin
       setReviews(updatedProduct.reviews);
       setComment("");
       setRating(5);
-    } catch (err: any) {
-      setError(err.message);
+} catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Failed to post review");
     } finally {
       setIsSubmitting(false);
     }

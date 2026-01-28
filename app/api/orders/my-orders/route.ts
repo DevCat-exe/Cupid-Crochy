@@ -15,8 +15,8 @@ export async function GET() {
     await connectDB();
     
     // Find orders for the logged-in user
-    // Assuming the session user has an 'id' property as we added it in the callback
-    const userId = (session.user as any).id;
+    // Using both possible user ID fields for compatibility
+    const userId = (session.user as { id?: string; _id?: string }).id ?? (session.user as { id?: string; _id?: string })._id;
     
     if (!userId) {
        return NextResponse.json({ error: "User ID not found in session" }, { status: 400 });

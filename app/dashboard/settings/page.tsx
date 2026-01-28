@@ -3,8 +3,8 @@
 import { useState, useEffect } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import { User, Mail, Loader2, Shield, Bell } from "lucide-react";
-import Link from "next/link";
 import UserSidebar from "@/components/ui/UserSidebar";
 import { useToast } from "@/components/providers/ToastProvider";
 
@@ -78,9 +78,9 @@ export default function SettingsPage() {
               {/* Profile Card */}
               <div className="bg-white rounded-2xl p-8 border border-brand-maroon/5 shadow-sm">
                 <div className="flex items-start gap-6 mb-6">
-                  <div className="h-24 w-24 rounded-full overflow-hidden bg-brand-pink/20 flex items-center justify-center border-4 border-brand-pink/30 shrink-0">
+                  <div className="h-24 w-24 rounded-full overflow-hidden bg-brand-pink/20 flex items-center justify-center border-4 border-brand-pink/30 shrink-0 relative">
                     {session?.user?.image ? (
-                      <img src={session.user.image} alt="Profile" className="h-full w-full object-cover" />
+                      <Image src={session.user.image} alt="Profile" fill className="object-cover" />
                     ) : (
                       <User className="h-12 w-12 text-brand-maroon/40" />
                     )}

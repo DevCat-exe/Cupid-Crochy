@@ -5,7 +5,7 @@ import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { Heart, Trash2, Loader2 } from "lucide-react";
 import Link from "next/link";
-import { cn } from "@/lib/utils";
+import Image from "next/image";
 import UserSidebar from "@/components/ui/UserSidebar";
 import { useToast } from "@/components/providers/ToastProvider";
 
@@ -18,22 +18,33 @@ interface Product {
 }
 
 export default function WishlistPage() {
-  const { data: session, status } = useSession();
+  const { status } = useSession();
   const router = useRouter();
   const [wishlist, setWishlist] = useState<Product[]>([]);
   const { success } = useToast();
+  const [isLoaded, setIsLoaded] = useState(false);
 
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login?callbackUrl=/dashboard/wishlist");
-    } else if (status === "authenticated") {
-      const saved = localStorage.getItem("wishlist");
-      if (saved) {
-        const parsedWishlist = JSON.parse(saved);
-        setWishlist(parsedWishlist);
-      }
     }
   }, [status, router]);
+
+  useEffect(() => {
+    if (status === "authenticated" && !isLoaded) {
+      const saved = localStorage.getItem("wishlist");
+      if (saved) {
+        try {
+          const parsedWishlist = JSON.parse(saved);
+          // eslint-disable-next-line
+          setWishlist(parsedWishlist);
+        } catch (e) {
+          console.error("Failed to parse wishlist", e);
+        }
+      }
+      setIsLoaded(true);
+    }
+  }, [status, isLoaded]);
 
   const removeFromWishlist = (productId: string) => {
     const newWishlist = wishlist.filter(item => item._id !== productId);
@@ -85,9 +96,10 @@ export default function WishlistPage() {
                 {wishlist.map((product) => (
                   <div key={product._id} className="bg-white rounded-2xl overflow-hidden border border-brand-maroon/5 shadow-sm group">
                     <Link href={`/product/${product._id}`} className="block aspect-4/5 relative overflow-hidden">
-                      <img
+                      <Image
                         src={product.images[0]}
                         alt={product.name}
+                        fill
                         className="w-full h-full object-cover transition-transform group-hover:scale-110"
                       />
                       <button

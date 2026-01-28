@@ -12,6 +12,7 @@ import {
   Check
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
 import { useToast } from "@/components/providers/ToastProvider";
 
@@ -34,7 +35,7 @@ export default function ProductManagementClient({ initialProducts, currentUserRo
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   const isAdmin = currentUserRole === "admin";
-  const { success } = useToast();
+  const { } = useToast();
 
 
   // Form State
@@ -180,8 +181,8 @@ export default function ProductManagementClient({ initialProducts, currentUserRo
               <tr key={product._id} className="hover:bg-brand-pink/5 transition-colors group">
                 <td className="px-8 py-5">
                   <div className="flex items-center space-x-4">
-                    <div className="h-14 w-14 rounded-xl overflow-hidden bg-brand-pink/20 shrink-0 shadow-md">
-                      <img src={product.images[0]} alt={product.name} className="h-full w-full object-cover transition-transform group-hover:scale-110" />
+                  <div className="h-14 w-14 rounded-xl overflow-hidden bg-brand-pink/20 shrink-0 shadow-md relative">
+                      <Image src={product.images[0]} alt={product.name} fill className="object-cover transition-transform group-hover:scale-110" />
                     </div>
                     <div className="flex flex-col">
                        <span className="font-bold text-brand-maroon text-sm leading-tight">{product.name}</span>
@@ -257,7 +258,7 @@ export default function ProductManagementClient({ initialProducts, currentUserRo
       {/* Add/Edit Modal */}
       <AnimatePresence>
         {isModalOpen && (
-          <div className="fixed inset-0 z-[100] flex items-center justify-center px-4">
+          <div className="fixed inset-0 z-100 flex items-center justify-center px-4">
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -400,7 +401,7 @@ export default function ProductManagementClient({ initialProducts, currentUserRo
                   <button
                     disabled={loading}
                     type="submit"
-                    className="w-full bg-brand-maroon text-white font-bold py-5 rounded-[1.5rem] shadow-xl hover:shadow-brand-maroon/20 hover:bg-brand-maroon/90 transition-all flex items-center justify-center disabled:opacity-50"
+                    className="w-full bg-brand-maroon text-white font-bold py-5 rounded-3xl shadow-xl hover:shadow-brand-maroon/20 hover:bg-brand-maroon/90 transition-all flex items-center justify-center disabled:opacity-50"
                   >
                     {loading ? <Loader2 className="h-6 w-6 animate-spin mr-2" /> : editingProduct ? "Update Product" : "Launch Product"}
                   </button>

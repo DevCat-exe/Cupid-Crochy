@@ -4,10 +4,10 @@ import { authOptions } from "@/app/api/auth/[...nextauth]/route";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    if (!session || (session.user as any).role !== "admin") {
+    if (!session || (session.user as { role: string }).role !== "admin") {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
@@ -15,6 +15,7 @@ export async function GET(request: Request) {
     const users = await User.find().select("-password").sort({ createdAt: -1 });
     return NextResponse.json(users);
   } catch (error) {
+    console.error("Error fetching users:", error);
     return NextResponse.json({ error: "Server error" }, { status: 500 });
   }
 }

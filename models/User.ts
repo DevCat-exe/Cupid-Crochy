@@ -10,10 +10,7 @@ export interface IUser extends Document {
   updatedAt: Date;
 }
 
-const CartItemSchema: Schema = new Schema({
-  productId: { type: Schema.Types.ObjectId, ref: "Product", required: true },
-  quantity: { type: Number, required: true, min: 1 },
-});
+
 
 const UserSchema: Schema = new Schema(
   {

@@ -70,7 +70,7 @@ export default function CheckoutPage() {
       } else {
         setCouponError(data.error || "Invalid coupon code");
       }
-    } catch (error) {
+    } catch {
       setCouponError("Failed to validate coupon");
     } finally {
       setValidatingCoupon(false);
@@ -136,9 +136,10 @@ export default function CheckoutPage() {
                   {cartItems.map((item) => (
                     <div key={item.id} className="flex gap-4 py-4 border-b border-brand-maroon/5 last:border-0">
                       <div className="h-20 w-20 relative rounded-xl overflow-hidden bg-brand-pink/20 shrink-0">
-                        <img 
+                        <Image 
                           src={item.image} 
                           alt={item.name}
+                          fill
                           className="object-cover w-full h-full"
                         />
                       </div>
@@ -246,7 +247,9 @@ export default function CheckoutPage() {
                
                <div className="flex items-center gap-4 mb-6 p-4 bg-brand-pink/10 rounded-xl">
                   {session.user?.image ? (
-                     <img src={session.user.image} alt={session.user.name || "User"} className="h-12 w-12 rounded-full object-cover border-2 border-brand-pink" />
+                     <div className="h-12 w-12 relative rounded-full overflow-hidden border-2 border-brand-pink shrink-0">
+                        <Image src={session.user.image} alt={session.user.name || "User"} fill className="object-cover" />
+                     </div>
                   ) : (
                      <div className="h-12 w-12 rounded-full bg-brand-pink flex items-center justify-center text-brand-maroon font-bold text-xl">
                         {session.user?.name?.charAt(0).toUpperCase()}

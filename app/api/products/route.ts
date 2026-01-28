@@ -12,7 +12,7 @@ export async function GET(request: Request) {
 
     await connectDB();
 
-    const query: any = {};
+    const query: { category?: string } = {};
     if (category) query.category = category;
 
     const products = await Product.find(query)
@@ -31,7 +31,7 @@ export async function POST(request: Request) {
     const session = await getServerSession(authOptions);
     
     // Check if user is admin or staff
-    if (!session || ((session.user as any).role !== "admin" && (session.user as any).role !== "staff")) {
+    if (!session || ((session.user as { role: string }).role !== "admin" && (session.user as { role: string }).role !== "staff")) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 

@@ -10,7 +10,7 @@ export interface IPayment extends Document {
   stripePaymentId: string;
   stripeCustomerId?: string;
   description?: string;
-  metadata?: Record<string, any>;
+  metadata?: Record<string, string>;
   createdAt: Date;
   updatedAt: Date;
 }

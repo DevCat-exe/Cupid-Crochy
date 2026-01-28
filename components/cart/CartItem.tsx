@@ -1,6 +1,7 @@
 "use client";
 
 import { motion } from "framer-motion";
+import Image from "next/image";
 import { Plus, Minus, Trash2 } from "lucide-react";
 
 interface CartItemProps {
@@ -30,11 +31,12 @@ export default function CartItem({
       exit={{ opacity: 0, x: -20 }}
       className="flex items-center space-x-4 p-4 bg-white rounded-2xl border border-gray-100 mb-2 group transition-shadow hover:shadow-md"
     >
-      <div className="h-24 w-24 rounded-2xl overflow-hidden bg-brand-pink/20 shrink-0">
-        <img
+      <div className="h-24 w-24 rounded-2xl overflow-hidden bg-brand-pink/20 shrink-0 relative">
+        <Image
           src={image}
           alt={name}
-          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+          fill
+          className="object-cover group-hover:scale-110 transition-transform duration-500"
         />
       </div>
 
