@@ -56,9 +56,12 @@ export default function UserPaymentsPage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-brand-beige/30">
-        <Loader2 className="h-8 w-8 animate-spin text-brand-maroon" />
-      </div>
+      <>
+        <UserSidebar />
+        <div className="ml-64 min-h-screen bg-brand-beige/20 pt-16 pb-16 flex items-center justify-center">
+          <Loader2 className="h-8 w-8 animate-spin text-brand-maroon" />
+        </div>
+      </>
     );
   }
 
