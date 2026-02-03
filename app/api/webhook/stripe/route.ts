@@ -137,7 +137,7 @@ export async function POST(req: Request) {
         paymentMethod: "card",
         stripePaymentId: session.payment_intent as string,
         stripeCustomerId: session.customer as string,
-        description: `Payment for Order #${order._id.toString().slice(-6).toUpperCase()}`,
+        description: `Payment for Order #${order.shortOrderId}`,
         metadata: {
           userName: session.customer_details?.name,
           userEmail: session.customer_details?.email,
@@ -154,24 +154,24 @@ export async function POST(req: Request) {
         await resend.emails.send({
           from: "Cupid Crochy <onboarding@resend.dev>",
           to: session.customer_details?.email || "",
-          subject: `Order Confirmed - #${order._id.toString().slice(-6).toUpperCase()} | Cupid Crochy`,
+          subject: `Order Confirmed - #${order.shortOrderId} | Cupid Crochy`,
           html: `
             <!DOCTYPE html>
             <html>
             <head>
               <meta charset="utf-8">
               <meta name="viewport" content="width=device-width, initial-scale=1.0">
-              <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+              <link href="https://fonts.googleapis.com/css2?family=Cookie&family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
             </head>
             <body style="margin: 0; padding: 0; font-family: 'Outfit', sans-serif; background-color: #F5F0E6;">
-              <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="max-width: 600px; margin: 0 auto; background: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 20px rgba(91, 26, 26, 0.1);">
                 <!-- Header -->
                 <tr>
-                  <td style="background: linear-gradient(135deg, #5B1A1A 0%, #7A2535 100%); padding: 40px 30px; text-align: center;">
-                    <h1 style="margin: 0; color: #F5F0E6; font-size: 28px; font-weight: 700; letter-spacing: 2px;">
-                      CUPID CROCHY
+                  <td style="background: linear-gradient(135deg, #5B1A1A 0%, #7A2535 100%); padding: 50px 30px; text-align: center;">
+                    <h1 style="margin: 0; color: #F5F0E6; font-family: 'Cookie', cursive; font-size: 42px; font-weight: 400;">
+                      Cupid Crochy
                     </h1>
-                    <p style="margin: 10px 0 0 0; color: rgba(245, 240, 230, 0.9); font-size: 14px; font-weight: 300;">
+                    <p style="margin: 8px 0 0 0; color: rgba(245, 240, 230, 0.9); font-size: 13px; font-weight: 300; letter-spacing: 3px; text-transform: uppercase;">
                       Handcrafted with Love
                     </p>
                   </td>
@@ -179,20 +179,20 @@ export async function POST(req: Request) {
 
                 <!-- Main Content -->
                 <tr>
-                  <td style="background: #ffffff; padding: 50px 30px;">
+                  <td style="background: #ffffff; padding: 50px 40px;">
                     <!-- Thank You Section -->
-                    <div style="text-align: center; margin-bottom: 40px;">
-                      <div style="display: inline-block; background: #FFB6C1; padding: 15px 30px; border-radius: 50px; margin-bottom: 20px;">
-                        <span style="font-size: 48px;">🎉</span>
+                    <div style="text-align: center; margin-bottom: 45px;">
+                      <div style="display: inline-block; background: linear-gradient(135deg, #FFB6C1 0%, #F5DDEA 100%); width: 80px; height: 80px; border-radius: 50%; margin-bottom: 25px; line-height: 80px; box-shadow: 0 4px 15px rgba(255, 182, 193, 0.4);">
+                        <span style="font-size: 36px;">🎉</span>
                       </div>
-                      <h2 style="margin: 0 0 15px 0; color: #5B1A1A; font-size: 24px; font-weight: 600;">
+                      <h2 style="margin: 0 0 12px 0; color: #5B1A1A; font-size: 28px; font-weight: 700;">
                         Order Confirmed!
                       </h2>
-                      <p style="margin: 0; color: #666; font-size: 16px;">
-                        Hi <strong>${session.customer_details?.name || "there"}</strong>!
+                      <p style="margin: 0; color: #666; font-size: 16px; line-height: 1.6;">
+                        Hi <strong style="color: #5B1A1A;">${session.customer_details?.name || "there"}</strong>!
                       </p>
-                      <p style="margin: 10px 0 0 0; color: #666; font-size: 15px; line-height: 1.6;">
-                        Thank you for your order. We're thrilled to begin crafting your hand treasures! Your order <strong>#${order._id.toString().slice(-6).toUpperCase()}</strong> has been received and is being prepared.
+                      <p style="margin: 12px 0 0 0; color: #666; font-size: 15px; line-height: 1.7;">
+                        Thank you for your order. We're thrilled to begin crafting your hand treasures! Your order <strong style="color: #5B1A1A; font-size: 18px;">#${order.shortOrderId}</strong> has been received and is being prepared.
                       </p>
                     </div>
 
@@ -207,7 +207,7 @@ export async function POST(req: Request) {
                             <tr>
                               <td width="50%" style="color: #666; font-size: 14px; padding-bottom: 12px;">
                                 <strong>Order ID:</strong><br>
-                                <span style="color: #5B1A1A;">#${order._id.toString().slice(-6).toUpperCase()}</span>
+                                <span style="color: #5B1A1A; font-weight: 700; font-size: 16px;">#${order.shortOrderId}</span>
                               </td>
                               <td width="50%" style="color: #666; font-size: 14px; padding-bottom: 12px;">
                                 <strong>Date:</strong><br>
@@ -318,7 +318,7 @@ export async function POST(req: Request) {
           `,
           attachments: [
             {
-              filename: `invoice-${order._id}.pdf`,
+              filename: `invoice-${order.shortOrderId}.pdf`,
               content: base64Attachment,
             }
           ]
