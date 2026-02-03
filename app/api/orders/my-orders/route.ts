@@ -22,11 +22,13 @@ export async function GET() {
        return NextResponse.json({ error: "User ID not found in session" }, { status: 400 });
     }
 
+    // Query by userId (can be string or ObjectId, MongoDB handles both)
     const orders = await Order.find({ userId }).sort({ createdAt: -1 });
 
     return NextResponse.json(orders);
-  } catch (error) {
+  } catch (error: unknown) {
     console.error("Error fetching my orders:", error);
-    return NextResponse.json({ error: "Internal Server Error" }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : "Unknown error";
+    return NextResponse.json({ error: "Internal Server Error", details: errorMessage }, { status: 500 });
   }
 }

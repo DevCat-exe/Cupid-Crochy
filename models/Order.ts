@@ -10,7 +10,7 @@ export interface IOrderItem {
 
 export interface IOrder extends Document {
   shortOrderId: string;
-  userId: mongoose.Types.ObjectId;
+  userId?: string; // Can be MongoDB ObjectId or Google OAuth ID
   userName: string;
   userEmail: string;
   items: IOrderItem[];
@@ -44,7 +44,7 @@ const OrderItemSchema: Schema = new Schema({
 const OrderSchema: Schema = new Schema(
   {
     shortOrderId: { type: String, required: true, unique: true },
-    userId: { type: Schema.Types.ObjectId, ref: "User" },
+    userId: { type: String }, // Can be MongoDB ObjectId or Google OAuth ID
     userName: { type: String, required: true },
     userEmail: { type: String, required: true },
     items: [OrderItemSchema],

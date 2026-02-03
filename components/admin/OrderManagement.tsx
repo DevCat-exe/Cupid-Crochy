@@ -82,6 +82,31 @@ export default function OrderManagement({
     }
   };
 
+  const updateOrderStatus = async (orderId: string, newStatus: Order["status"]) => {
+    if (!isAdmin) return;
+    
+    try {
+      const response = await fetch(`/api/orders/${orderId}/status`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ status: newStatus }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Failed to update order status");
+      }
+
+      // Update local state to reflect the change
+      setOrders(prevOrders => 
+        prevOrders.map(order => 
+          order._id === orderId ? { ...order, status: newStatus } : order
+        )
+      );
+    } catch (error) {
+      console.error("Error updating order status:", error);
+    }
+  };
+
   const deleteOrder = async (id: string) => {
     if (!confirm("Are you sure you want to delete this order?")) {
       return;
@@ -158,8 +183,9 @@ export default function OrderManagement({
                     <td className="px-8 py-4">
                       <select
                         value={order.status}
+                        onChange={(e) => updateOrderStatus(order._id, e.target.value as Order["status"])}
                         disabled={!isAdmin}
-                        className="w-full bg-brand-pink/10 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-maroon/20 outline-none font-medium"
+                        className="w-full bg-brand-pink/10 rounded-lg px-3 py-2 focus:ring-2 focus:ring-brand-maroon/20 outline-none font-medium cursor-pointer hover:bg-brand-pink/20"
                       >
                         <option value="pending">Pending</option>
                         <option value="processing">Processing</option>

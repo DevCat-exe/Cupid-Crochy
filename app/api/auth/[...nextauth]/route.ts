@@ -82,13 +82,16 @@ export const authOptions: NextAuthOptions = {
     },
   },
   callbacks: {
-    async jwt({ token, user, trigger, session }) {
-  // On initial sign in
-  if (user) {
+    async jwt({ token, user, trigger, session, account }) {
+      // On initial sign in
+      if (user) {
         token.role = user.role || "user";
-        const uid = (user as { _id?: string; id?: string })._id ?? (user as { _id?: string; id?: string }).id;
-        token.id = uid || undefined;
-  }
+        // If this is an OAuth sign-in (Google), user.id might be the OAuth ID
+        // We need to ensure we store the MongoDB user ID
+        const userId = (user as { _id?: string; id?: string })._id ?? (user as { _id?: string; id?: string }).id;
+        token.id = userId || undefined;
+        token.email = user.email;
+      }
 
       // If we're updating the session (e.g. from the dashboard profile update)
       if (trigger === "update" && session) {

@@ -1,8 +1,8 @@
 import mongoose, { Schema, Document } from "mongoose";
 
 export interface IPayment extends Document {
-  userId: mongoose.Types.ObjectId;
-  orderId: mongoose.Types.ObjectId;
+  userId: string; // Can be MongoDB ObjectId or Google OAuth ID
+  orderId: string; // Store as string for consistency
   amount: number;
   currency: string;
   status: "pending" | "succeeded" | "failed" | "refunded" | "partially_refunded";
@@ -17,8 +17,8 @@ export interface IPayment extends Document {
 
 const PaymentSchema: Schema = new Schema(
   {
-    userId: { type: Schema.Types.ObjectId, ref: "User", required: true },
-    orderId: { type: Schema.Types.ObjectId, ref: "Order", required: true },
+    userId: { type: String, required: true },
+    orderId: { type: String, required: true },
     amount: { type: Number, required: true },
     currency: { type: String, default: "bdt" },
     status: {
