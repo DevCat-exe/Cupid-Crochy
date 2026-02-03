@@ -8,6 +8,7 @@ import Image from "next/image";
 import { useParams, useRouter } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { useCart } from "@/components/providers/CartProvider";
+import { useToast } from "@/components/providers/ToastProvider";
 import ProductReviews from "@/components/product/ProductReviews";
 
 interface Product {
@@ -21,6 +22,61 @@ interface Product {
   rating: number;
   tags?: string[];
   reviews: { user: string; rating: number; comment: string; createdAt: string }[];
+}
+
+function WishlistButton({ product }: { product: Product }) {
+  const [isInWishlist, setIsInWishlist] = useState(false);
+  const { success } = useToast();
+
+  // Initialize wishlist state from localStorage
+  useEffect(() => {
+    const saved = localStorage.getItem("wishlist");
+    if (saved) {
+      try {
+        const wishlist = JSON.parse(saved);
+        // Using setState in useEffect for localStorage sync is acceptable pattern
+        setIsInWishlist(wishlist.some((item: Product) => item._id === product._id));
+      } catch (e) {
+        console.error("Failed to parse wishlist", e);
+      }
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [product._id]);
+
+  const toggleWishlist = () => {
+    const saved = localStorage.getItem("wishlist");
+    let wishlist: Product[] = [];
+    
+    if (saved) {
+      try {
+        wishlist = JSON.parse(saved);
+      } catch (e) {
+        console.error("Failed to parse wishlist", e);
+      }
+    }
+
+    if (isInWishlist) {
+      wishlist = wishlist.filter((item: Product) => item._id !== product._id);
+      success("Removed from wishlist");
+    } else {
+      wishlist.push(product);
+      success("Added to wishlist");
+    }
+
+    localStorage.setItem("wishlist", JSON.stringify(wishlist));
+    setIsInWishlist(!isInWishlist);
+  };
+
+  return (
+    <button
+      onClick={toggleWishlist}
+      className={`h-14 w-14 rounded-2xl border border-brand-maroon/10 flex items-center justify-center hover:bg-brand-pink/20 transition-all ${
+        isInWishlist ? "bg-brand-pink/40 text-brand-maroon" : "text-brand-maroon"
+      }`}
+    >
+      <Heart className={`h-6 w-6 ${isInWishlist ? "fill-current" : ""}`} />
+    </button>
+  );
 }
 
 export default function ProductDetailPage() {
@@ -132,15 +188,19 @@ export default function ProductDetailPage() {
                      ))}
                    </div>
                  )}
-                <div className="flex items-center space-x-4">
+                 <div className="flex items-center space-x-4">
                   <div className="flex items-center text-yellow-500">
                     {[...Array(5)].map((_, i) => (
-                      <Star key={i} className={cn("h-5 w-5 fill-current", i >= Math.floor(product.rating) && "opacity-30")} />
+                      <Star key={i} className={cn("h-5 w-5 fill-current", i >= Math.floor(product.rating || 0) && "opacity-30")} />
                     ))}
-                    <span className="ml-2 text-brand-maroon font-bold">{product.rating || "5.0"}</span>
+                    <span className="ml-2 text-brand-maroon font-bold">
+                      {product.rating && product.rating > 0 ? product.rating.toFixed(1) : "No rating"}
+                    </span>
                   </div>
                   <span className="text-brand-maroon/20 text-xl">|</span>
-                  <span className="text-brand-maroon/60 text-sm font-medium">{product.reviews.length} reviews</span>
+                  <span className="text-brand-maroon/60 text-sm font-medium">
+                    {product.reviews && product.reviews.length > 0 ? `${product.reviews.length} reviews` : "No reviews yet"}
+                  </span>
                 </div>
               </div>
 
@@ -195,9 +255,7 @@ export default function ProductDetailPage() {
                     <span>Add to Cart</span>
                   </button>
                   
-                  <button className="h-14 w-14 rounded-2xl border border-brand-maroon/10 flex items-center justify-center hover:bg-brand-pink/20 transition-all text-brand-maroon">
-                    <Heart className="h-6 w-6" />
-                  </button>
+                   <WishlistButton product={product} />
                 </div>
               </div>
 

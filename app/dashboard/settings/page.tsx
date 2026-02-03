@@ -63,15 +63,9 @@ export default function SettingsPage() {
       <div className="ml-64 min-h-screen bg-brand-beige/20 pt-16 pb-16">
         <div className="p-8">
           <div className="max-w-3xl mx-auto">
-            <div className="mb-8 flex justify-between items-center">
-              <div>
-                <h1 className="text-4xl font-bold text-brand-maroon mb-2">Profile Settings</h1>
-                <p className="text-lg text-brand-maroon/60">Update your account information</p>
-              <span className="px-4 py-2 bg-brand-pink text-brand-maroon text-xs font-bold uppercase tracking-widest rounded-full">
-              </span>
-              </div>
-              <span className="px-4 py-2 bg-brand-pink text-brand-maroon text-xs font-bold uppercase tracking-widest rounded-full">
-              </span>
+            <div className="mb-8">
+              <h1 className="text-4xl font-bold text-brand-maroon mb-2">Profile Settings</h1>
+              <p className="text-lg text-brand-maroon/60">Update your account information</p>
             </div>
 
             <div className="space-y-6">

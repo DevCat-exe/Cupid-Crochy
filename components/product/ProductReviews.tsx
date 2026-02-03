@@ -8,6 +8,7 @@ import { motion } from "framer-motion";
 
 interface Review {
   user: string;
+  userImage?: string;
   rating: number;
   comment: string;
   createdAt: string;
@@ -156,9 +157,17 @@ export default function ProductReviews({ productId, initialReviews, initialRatin
                 >
                   <div className="flex justify-between items-start mb-4">
                     <div className="flex items-center space-x-3">
-                      <div className="h-10 w-10 rounded-full bg-brand-pink flex items-center justify-center">
-                        <User className="h-5 w-5 text-brand-maroon/40" />
-                      </div>
+                      {review.userImage ? (
+                        <img
+                          src={review.userImage}
+                          alt={review.user}
+                          className="h-10 w-10 rounded-full object-cover border-2 border-brand-pink"
+                        />
+                      ) : (
+                        <div className="h-10 w-10 rounded-full bg-brand-pink flex items-center justify-center">
+                          <User className="h-5 w-5 text-brand-maroon/40" />
+                        </div>
+                      )}
                       <div>
                         <p className="font-bold text-brand-maroon text-sm">{review.user}</p>
                         <p className="text-[10px] font-bold text-brand-maroon/40 uppercase tracking-widest">Verified Customer</p>

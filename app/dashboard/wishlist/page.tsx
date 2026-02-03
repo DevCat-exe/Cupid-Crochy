@@ -72,11 +72,7 @@ export default function WishlistPage() {
               <div>
                 <h1 className="text-4xl font-bold text-brand-maroon mb-2">My Wishlist</h1>
                 <p className="text-lg text-brand-maroon/60">Items you&apos;ve saved for later</p>
-              <span className="px-4 py-2 bg-brand-pink text-brand-maroon text-xs font-bold uppercase tracking-widest rounded-full">
-              </span>
               </div>
-              <span className="px-4 py-2 bg-brand-pink text-brand-maroon text-xs font-bold uppercase tracking-widest rounded-full">
-              </span>
             </div>
 
             {wishlist.length === 0 ? (

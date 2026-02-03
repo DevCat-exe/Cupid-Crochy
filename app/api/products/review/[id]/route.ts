@@ -30,6 +30,7 @@ export async function POST(
 
     const newReview = {
       user: session.user?.name || "Anonymous",
+      userImage: session.user?.image || null,
       rating: Number(rating),
       comment,
       createdAt: new Date()

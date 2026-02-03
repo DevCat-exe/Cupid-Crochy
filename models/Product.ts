@@ -2,6 +2,7 @@ import mongoose, { Schema, Document } from "mongoose";
 
 export interface IReview {
   user: string;
+  userImage?: string;
   rating: number;
   comment: string;
   createdAt: Date;
@@ -25,6 +26,7 @@ export interface IProduct extends Document {
 
 const ReviewSchema: Schema = new Schema({
   user: { type: String, required: true },
+  userImage: { type: String },
   rating: { type: Number, required: true, min: 1, max: 5 },
   comment: { type: String, required: true },
   createdAt: { type: Date, default: Date.now },
