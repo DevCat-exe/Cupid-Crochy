@@ -93,8 +93,8 @@ export const authOptions: NextAuthOptions = {
         token.role = user.role || "user";
         // If this is an OAuth sign-in (Google), user.id might be the OAuth ID
         // We need to ensure we store the MongoDB user ID
-        const userId = (user as { _id?: string; id?: string })._id ?? (user as { _id?: string; id?: string }).id;
-        token.id = userId || undefined;
+        const userId = (user as { _id?: string; id?: string })._id || user.id;
+        token.id = userId;
         token.email = user.email;
       }
 

@@ -28,7 +28,7 @@ export default async function AdminUsersPage() {
         </p>
       </div>
       
-      <UserManagementClient initialUsers={users} currentUserRole={currentUserRole} />
+      <UserManagementClient initialUsers={users} currentUserRole={currentUserRole || "user"} />
     </div>
   );
 }

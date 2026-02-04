@@ -1,13 +1,13 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { motion } from "framer-motion";
 import { CheckCircle2, ShoppingBag, ArrowRight } from "lucide-react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
 import { useCart } from "@/components/providers/CartProvider";
 
-export default function CheckoutSuccessPage() {
+function SuccessContent() {
   const searchParams = useSearchParams();
   const sessionId = searchParams.get("session_id");
   const { clearCart, cartItems } = useCart();
@@ -56,5 +56,17 @@ export default function CheckoutSuccessPage() {
         </div>
       </motion.div>
     </div>
+  );
+}
+
+export default function CheckoutSuccessPage() {
+  return (
+    <Suspense fallback={
+        <div className="min-h-[80vh] flex items-center justify-center">
+            <div className="h-8 w-8 animate-spin border-4 border-brand-maroon border-t-transparent rounded-full" />
+        </div>
+    }>
+      <SuccessContent />
+    </Suspense>
   );
 }
