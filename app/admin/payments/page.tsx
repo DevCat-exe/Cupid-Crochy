@@ -1,11 +1,14 @@
+
 import connectDB from "@/lib/mongodb";
 import Payment from "@/models/Payment";
+import Order from "@/models/Order";
 import { DollarSign, TrendingUp, CheckCircle2, XCircle, Clock } from "lucide-react";
 import { cn } from "@/lib/utils";
 
 interface PaymentType {
   _id: string;
-  orderId?: string;
+  orderId: string;
+  orderShortId?: string; // Add this
   amount: number;
   status: string;
   createdAt: string;
@@ -14,14 +17,25 @@ interface PaymentType {
 async function getPaymentStats() {
   await connectDB();
   
-  const [totalPayments, successfulPayments, failedPayments, payments] = await Promise.all([
+  const [totalPayments, successfulPayments, failedPayments, paymentsData] = await Promise.all([
     Payment.countDocuments(),
     Payment.countDocuments({ status: "succeeded" }),
     Payment.countDocuments({ status: "failed" }),
     Payment.find().sort({ createdAt: -1 }).limit(10).lean(),
   ]);
 
-  const totalRevenue = payments.reduce((acc, payment) => acc + (payment.amount || 0), 0);
+  // Manually fetch order details to get shortOrderId
+  const orderIds = paymentsData.map(p => p.orderId);
+  const orders = await Order.find({ _id: { $in: orderIds } }).select("shortOrderId").lean();
+  
+  const orderMap = new Map(orders.map(o => [o._id.toString(), o.shortOrderId]));
+
+  const payments = paymentsData.map(p => ({
+    ...p,
+    orderShortId: orderMap.get(p.orderId.toString()) || "N/A"
+  }));
+
+  const totalRevenue = paymentsData.reduce((acc, payment) => acc + (payment.amount || 0), 0);
   const pendingPayments = await Payment.countDocuments({ status: "pending" });
   const refundedPayments = await Payment.countDocuments({ status: { $in: ["refunded", "partially_refunded"] } });
 
@@ -128,7 +142,7 @@ export default async function PaymentsPage() {
                 <tr key={payment._id} className="hover:bg-brand-pink/5 transition-colors group">
                   <td className="px-8 py-5 font-bold text-brand-maroon text-sm">{payment._id.toString().slice(-6).toUpperCase()}</td>
                   <td className="px-8 py-5 font-bold text-brand-maroon text-sm">
-                    #{payment.orderId?.toString().slice(-6).toUpperCase() || "N/A"}
+                    #{payment.orderShortId}
                   </td>
                   <td className="px-8 py-5 font-bold text-brand-maroon">৳{payment.amount}</td>
                   <td className="px-8 py-5">

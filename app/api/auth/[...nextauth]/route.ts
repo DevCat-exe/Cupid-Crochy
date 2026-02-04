@@ -3,6 +3,8 @@ import CredentialsProvider from "next-auth/providers/credentials";
 import connectDB from "@/lib/mongodb";
 import User from "@/models/User";
 import bcrypt from "bcryptjs";
+import { MongoDBAdapter } from "@auth/mongodb-adapter";
+import clientPromise from "@/lib/db";
 
 import GoogleProvider from "next-auth/providers/google";
 
@@ -31,6 +33,7 @@ declare module "next-auth/jwt" {
 }
 
 export const authOptions: NextAuthOptions = {
+  adapter: MongoDBAdapter(clientPromise),
   providers: [
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID || "",
@@ -77,7 +80,9 @@ export const authOptions: NextAuthOptions = {
       await User.findByIdAndUpdate(user.id, { 
         role: "user",
         wishlist: [],
-        cart: []
+        cart: [],
+        createdAt: new Date(),
+        updatedAt: new Date(),
       });
     },
   },
