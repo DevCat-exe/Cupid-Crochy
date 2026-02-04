@@ -3,6 +3,8 @@ import connectDB from "@/lib/mongodb";
 import Order from "@/models/Order";
 import { generateInvoice } from "@/lib/pdf-generator";
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: Request) {
   try {
     await connectDB();
@@ -41,7 +43,7 @@ export async function GET(request: Request) {
       },
     });
   } catch (error: unknown) {
-console.error("Failed to generate invoice:", error);
+    console.error("Failed to generate invoice:", error);
     console.error("Error stack:", error instanceof Error ? error.stack : 'No stack available');
     return NextResponse.json(
       { error: "Internal Server Error", details: error instanceof Error ? error.message : 'Unknown error' },

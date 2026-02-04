@@ -37,7 +37,6 @@ export default function Header() {
     { label: "Home", path: "/" },
     { label: "Shop", path: "/shop" },
     { label: "Contact", path: "/contact" },
-    { label: "Track Order", path: "/order-tracking" },
   ];
 
   const dashboardLink = userData?.role === "admin" || userData?.role === "staff" ? "/admin" : "/dashboard";
