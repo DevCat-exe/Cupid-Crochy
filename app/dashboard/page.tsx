@@ -14,10 +14,15 @@ import { motion, AnimatePresence } from "framer-motion";
 interface Order {
   _id: string;
   shortOrderId: string;
+  userName?: string;
   total: number;
   status: string;
   paymentStatus: string;
   createdAt: string;
+  shippingAddress?: {
+    city: string;
+    country: string;
+  };
   items: {
     name: string;
     quantity: number;

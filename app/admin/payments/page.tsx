@@ -97,7 +97,7 @@ export default async function PaymentsPage() {
       {/* Stats Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {cards.map((card, i) => (
-          <div key={i} className="bg-white p-8 rounded-[2rem] border border-brand-maroon/5 shadow-sm hover:shadow-xl transition-all duration-500 group">
+          <div key={i} className="bg-white p-8 rounded-4xl border border-brand-maroon/5 shadow-sm hover:shadow-xl transition-all duration-500 group">
             <div className="flex justify-between items-start mb-4">
               <div className={cn("p-4 rounded-2xl transition-transform group-hover:scale-110", card.color)}>
                 <card.icon className="h-6 w-6" />

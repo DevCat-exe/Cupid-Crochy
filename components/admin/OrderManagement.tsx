@@ -8,11 +8,8 @@ import {
   X,
   Loader2,
   Package,
-  Clock,
-  MapPin,
   Truck,
   CheckCircle2,
-  XCircle,
 } from "lucide-react";
 import Image from "next/image";
 import { motion, AnimatePresence } from "framer-motion";
@@ -256,7 +253,7 @@ export default function OrderManagement({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="fixed inset-0 z-[100] flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
+            className="fixed inset-0 z-100 flex items-center justify-center bg-black/40 backdrop-blur-sm p-4"
             onClick={() => setIsModalOpen(false)}
         >
           <motion.div
@@ -264,7 +261,7 @@ export default function OrderManagement({
              animate={{ opacity: 1, scale: 1, y: 0 }}
              exit={{ opacity: 0, scale: 0.95, y: 20 }}
              transition={{ type: "spring", duration: 0.5 }}
-             className="bg-[#FDF9FB] rounded-[2rem] w-full max-w-2xl shadow-2xl overflow-hidden border border-brand-maroon/10" // Matches Product Modal style
+             className="bg-[#FDF9FB] rounded-4xl w-full max-w-2xl shadow-2xl overflow-hidden border border-brand-maroon/10" // Matches Product Modal style
              onClick={(e) => e.stopPropagation()}
           >
              {/* Modal Header */}
@@ -370,7 +367,7 @@ export default function OrderManagement({
                   <div className="space-y-3">
                     {selectedOrder.items.map((item, idx) => (
                       <div key={idx} className="flex items-center gap-4 bg-white p-3 rounded-2xl border border-brand-maroon/5 shadow-sm hover:shadow-md transition-shadow">
-                        <div className="relative h-16 w-16 rounded-xl overflow-hidden bg-gray-100 flex-shrink-0">
+                        <div className="relative h-16 w-16 rounded-xl overflow-hidden bg-gray-100 shrink-0">
                              <Image
                                 src={item.image}
                                 alt={item.name}

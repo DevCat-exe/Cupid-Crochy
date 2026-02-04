@@ -28,7 +28,7 @@ export default async function AdminOrdersPage() {
         </p>
       </div>
       
-      <OrderManagementClient initialOrders={orders} currentUserRole={currentUserRole} />
+      <OrderManagementClient initialOrders={orders} currentUserRole={currentUserRole || "user"} />
     </div>
   );
 }
