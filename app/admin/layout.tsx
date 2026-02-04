@@ -19,8 +19,8 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <AdminSidebar />
-      <div className="grow ml-64 flex flex-col min-h-screen">
-        <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-10 sticky top-0 z-40">
+      <div className="grow flex flex-col min-h-screen lg:ml-64">
+        <header className="h-20 bg-white border-b border-gray-100 flex items-center justify-between px-4 sm:px-10 sticky top-0 z-40">
           <div>
             <h2 className="text-xl font-bold text-brand-maroon">Admin Dashboard</h2>
             <p className="text-xs text-brand-maroon/40 font-medium">Manage your store with ease</p>

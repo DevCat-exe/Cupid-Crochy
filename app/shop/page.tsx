@@ -178,7 +178,7 @@ export default function ShopPage() {
               className="md:hidden flex items-center justify-center gap-2 px-4 py-2 border border-brand-maroon/20 rounded-xl text-brand-maroon bg-white"
             >
               <Filter className="h-4 w-4" />
-              {showFilters ? "Hide Filters" : "Show Filters"}
+              Filters
             </button>
           </div>
         </div>
@@ -263,56 +263,10 @@ export default function ShopPage() {
             </div>
            </div>
 
-          {/* Filters - Mobile */}
-          <AnimatePresence>
-            {showFilters && (
-              <motion.div
-                initial={{ height: 0, opacity: 0 }}
-                animate={{ height: "auto", opacity: 1 }}
-                exit={{ height: 0, opacity: 0 }}
-                className="md:hidden w-full bg-white p-6 rounded-2xl shadow-sm border border-brand-maroon/5 mb-6 overflow-hidden"
-              >
-                {/* Same filters as desktop but tailored for mobile view */}
-                <div className="mb-6">
-                  <h3 className="font-bold text-brand-maroon mb-2">Categories</h3>
-                  <div className="flex flex-wrap gap-2">
-                    {categories.map(cat => (
-                      <button
-                        key={cat}
-                        onClick={() => setActiveCategory(cat)}
-                        className={cn(
-                          "px-3 py-1 rounded-full text-sm font-medium border transition-colors",
-                          activeCategory === cat
-                            ? "bg-brand-maroon text-white border-brand-maroon"
-                            : "border-brand-maroon/30 text-brand-maroon/70"
-                        )}
-                      >
-                        {cat}
-                      </button>
-                    ))}
-                  </div>
-                </div>
-                {/* Mobile Tags & Availability could go here similarly... keeping it brief */}
-                <button 
-                  onClick={clearFilters}
-                  className="w-full py-2 border border-brand-maroon rounded-xl text-brand-maroon font-bold text-sm mb-2"
-                >
-                  Clear Filters
-                </button>
-                <button 
-                  onClick={() => setShowFilters(false)}
-                  className="w-full py-2 bg-brand-maroon rounded-xl text-white font-bold text-sm"
-                >
-                  Apply Filters
-                </button>
-              </motion.div>
-            )}
-          </AnimatePresence>
-
           {/* Product Grid */}
           <div className="grow">
             {loading ? (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                  {[...Array(6)].map((_, i) => (
                    <div key={i} className="aspect-3/4 bg-brand-pink/10 rounded-2xl animate-pulse" />
                  ))}
@@ -329,7 +283,7 @@ export default function ShopPage() {
                 </button>
               </div>
             ) : (
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 <AnimatePresence mode="popLayout">
                   {filteredProducts.map((product, index) => (
                     <motion.div
@@ -448,6 +402,132 @@ export default function ShopPage() {
           </div>
         </div>
       </div>
+      <AnimatePresence>
+        {showFilters && (
+          <motion.div
+            className="fixed inset-0 z-50 flex md:hidden"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+          >
+            <button
+              type="button"
+              aria-label="Close filters"
+              onClick={() => setShowFilters(false)}
+              className="absolute inset-0 bg-black/40 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ x: "100%" }}
+              animate={{ x: 0 }}
+              exit={{ x: "100%" }}
+              transition={{ type: "spring", stiffness: 320, damping: 30 }}
+              className="ml-auto h-full w-full max-w-sm bg-white p-6 shadow-2xl overflow-y-auto"
+            >
+              <div className="flex items-center justify-between mb-6">
+                <h3 className="text-lg font-bold text-brand-maroon font-outfit">Filters</h3>
+                <button
+                  type="button"
+                  onClick={() => setShowFilters(false)}
+                  className="text-sm font-bold text-brand-maroon/60 hover:text-brand-maroon"
+                >
+                  Close
+                </button>
+              </div>
+
+              <div className="space-y-8">
+                <div>
+                  <div className="flex items-center justify-between mb-3">
+                    <h4 className="font-bold text-brand-maroon">Categories</h4>
+                    {(activeCategory !== "All" || selectedTags.length > 0 || availabilityFilter !== "all" || searchQuery) && (
+                      <button
+                        onClick={clearFilters}
+                        className="text-xs font-bold text-brand-maroon/60 hover:text-brand-maroon"
+                      >
+                        Clear
+                      </button>
+                    )}
+                  </div>
+                  <div className="flex flex-wrap gap-2">
+                    {categories.map((cat) => (
+                      <button
+                        key={cat}
+                        onClick={() => setActiveCategory(cat)}
+                        className={cn(
+                          "px-3 py-1 rounded-full text-sm font-medium border transition-colors",
+                          activeCategory === cat
+                            ? "bg-brand-maroon text-white border-brand-maroon"
+                            : "border-brand-maroon/30 text-brand-maroon/70"
+                        )}
+                      >
+                        {cat}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-brand-maroon mb-3">Availability</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {[
+                      { id: "all", label: "All Items" },
+                      { id: "available", label: "In Stock" },
+                      { id: "soldout", label: "Sold Out" }
+                    ].map((opt) => (
+                      <button
+                        key={opt.id}
+                        onClick={() => setAvailabilityFilter(opt.id)}
+                        className={cn(
+                          "px-3 py-1 rounded-full text-sm font-medium border transition-colors",
+                          availabilityFilter === opt.id
+                            ? "bg-brand-maroon text-white border-brand-maroon"
+                            : "border-brand-maroon/30 text-brand-maroon/70"
+                        )}
+                      >
+                        {opt.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                <div>
+                  <h4 className="font-bold text-brand-maroon mb-3">Tags</h4>
+                  <div className="flex flex-wrap gap-2">
+                    {TAGS.map((tag) => (
+                      <button
+                        key={tag}
+                        onClick={() => toggleTag(tag)}
+                        className={cn(
+                          "px-3 py-1 rounded-full text-xs font-bold border transition-all capitalize",
+                          selectedTags.includes(tag)
+                            ? "bg-brand-maroon text-white border-brand-maroon"
+                            : "bg-transparent text-brand-maroon/70 border-brand-maroon/30 hover:border-brand-maroon hover:text-brand-maroon"
+                        )}
+                      >
+                        {tag}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-10 space-y-3">
+                <button
+                  onClick={clearFilters}
+                  className="w-full py-3 border border-brand-maroon rounded-xl text-brand-maroon font-bold text-sm"
+                >
+                  Clear Filters
+                </button>
+                <button
+                  onClick={() => setShowFilters(false)}
+                  className="w-full py-3 bg-brand-maroon rounded-xl text-white font-bold text-sm"
+                >
+                  Apply Filters
+                </button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   );
 }

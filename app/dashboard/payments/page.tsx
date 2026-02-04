@@ -58,7 +58,7 @@ export default function UserPaymentsPage() {
     return (
       <>
         <UserSidebar />
-        <div className="ml-64 min-h-screen bg-brand-beige/20 pt-16 pb-16 flex items-center justify-center">
+        <div className="min-h-screen bg-brand-beige/20 pt-20 pb-16 flex items-center justify-center lg:ml-64 lg:pt-16">
           <Loader2 className="h-8 w-8 animate-spin text-brand-maroon" />
         </div>
       </>
@@ -69,8 +69,8 @@ export default function UserPaymentsPage() {
     <>
       <UserSidebar />
 
-      <div className="ml-64 min-h-screen bg-brand-beige/20 pt-16 pb-16">
-        <div className="p-8">
+      <div className="min-h-screen bg-brand-beige/20 pt-20 pb-16 lg:ml-64 lg:pt-16">
+        <div className="px-4 sm:p-8">
           <div className="max-w-5xl mx-auto">
             <div className="mb-8">
               <h1 className="text-4xl font-bold text-brand-maroon mb-2">Payment History</h1>
