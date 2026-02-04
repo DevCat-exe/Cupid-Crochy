@@ -36,9 +36,17 @@ export default function CouponManagementClient({ initialCoupons }: { initialCoup
   const { success, error, loading: toastLoading } = useToast();
 
   // Form State
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<{
+    code: string;
+    discountType: "percentage" | "fixed";
+    discount: string;
+    minOrderAmount: string;
+    maxUses: string;
+    validFrom: string;
+    validUntil: string;
+  }>({
     code: "",
-    discountType: "percentage" as const,
+    discountType: "percentage",
     discount: "",
     minOrderAmount: "",
     maxUses: "",

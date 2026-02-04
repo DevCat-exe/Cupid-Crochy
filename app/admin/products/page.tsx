@@ -28,7 +28,7 @@ export default async function AdminProductsPage() {
         </p>
       </div>
       
-      <ProductManagementClient initialProducts={products} currentUserRole={currentUserRole} />
+      <ProductManagementClient initialProducts={products} currentUserRole={currentUserRole || "user"} />
     </div>
   );
 }
