@@ -403,16 +403,13 @@ export default function ShopPage() {
                            </div>
 
                             <div className="mt-auto pt-4 flex items-center justify-between border-t border-brand-maroon/5">
-                              <div className="flex items-center text-yellow-500 gap-1">
-                                <Star className="h-4 w-4 fill-current" />
-                                <span className="text-sm font-bold text-brand-maroon/70">
-                                  {product.rating || "0"}
-                                </span>
-                                {product.reviews && product.reviews.length > 0 && (
-                                  <span className="text-xs text-brand-maroon/50">
-                                    ({product.reviews.length} reviews)
-                                  </span>
-                                )}
+                              <div className="flex items-center text-yellow-500">
+                                {[...Array(5)].map((_, i) => (
+                                  <Star 
+                                    key={i} 
+                                    className={`h-4 w-4 ${i < Math.round(product.rating || 0) ? 'fill-current' : 'text-brand-maroon/20'}`} 
+                                  />
+                                ))}
                               </div>
                               <div className="flex items-center gap-2">
                                 <button

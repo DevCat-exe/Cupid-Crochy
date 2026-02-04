@@ -3,12 +3,13 @@
 import { useSession } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
-import { Loader2, Package, Download, ExternalLink } from "lucide-react";
+import { Loader2, Package, Download, Truck, CheckCircle2, Clock, Box, MapPin, X } from "lucide-react";
 import Link from "next/link";
 import { cn } from "@/lib/utils";
 import Image from "next/image";
 import UserSidebar from "@/components/ui/UserSidebar";
 import { useToast } from "@/components/providers/ToastProvider";
+import { motion, AnimatePresence } from "framer-motion";
 
 interface Order {
   _id: string;
@@ -31,6 +32,18 @@ export default function DashboardPage() {
   const [orders, setOrders] = useState<Order[]>([]);
   const [loadingOrders, setLoadingOrders] = useState(true);
   const { success, error: toastError } = useToast();
+
+  // Order tracking state
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+  const [isTrackingModalOpen, setIsTrackingModalOpen] = useState(false);
+
+
+  const statusSteps = [
+    { id: "pending", label: "Confirmed", icon: Clock },
+    { id: "processing", label: "Crafting", icon: Box },
+    { id: "shipped", label: "On the way", icon: Truck },
+    { id: "delivered", label: "Delivered", icon: CheckCircle2 },
+  ];
 
   useEffect(() => {
     if (status === "unauthenticated") {
@@ -81,6 +94,19 @@ export default function DashboardPage() {
     }
   };
 
+  // Order tracking functions
+  const openTrackingModal = (order: Order) => {
+    setSelectedOrder(order);
+    setIsTrackingModalOpen(true);
+  };
+
+  const closeTrackingModal = () => {
+    setSelectedOrder(null);
+    setIsTrackingModalOpen(false);
+  };
+
+
+
   if (status === "loading") {
     return (
       <div className="min-h-screen flex items-center justify-center bg-brand-beige/30">
@@ -90,6 +116,9 @@ export default function DashboardPage() {
   }
 
   if (!session) return null;
+
+
+  const currentStepIndex = statusSteps.findIndex(s => s.id === (selectedOrder?.status === "cancelled" ? "pending" : selectedOrder?.status || "pending"));
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -155,15 +184,13 @@ export default function DashboardPage() {
                         >
                           <Download className="h-5 w-5" />
                         </button>
-                        <Link
-                          href={`/order-tracking?orderId=${order.shortOrderId}`}
-                          target="_blank"
-                          rel="noopener noreferrer"
+                        <button
+                          onClick={() => openTrackingModal(order)}
                           className="p-2 rounded-lg hover:bg-brand-pink/20 text-brand-maroon/60 hover:text-brand-maroon transition-all"
                           title="Track Order"
                         >
-                          <ExternalLink className="h-5 w-5" />
-                        </Link>
+                          <Truck className="h-5 w-5" />
+                        </button>
                       </div>
                     </div>
 
@@ -207,6 +234,135 @@ export default function DashboardPage() {
           </div>
         </div>
       </div>
+      <AnimatePresence>
+        {isTrackingModalOpen && selectedOrder && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4"
+            onClick={closeTrackingModal}
+          >
+            <motion.div
+              initial={{ opacity: 0, scale: 0.9, y: 20 }}
+              animate={{ opacity: 1, scale: 1, y: 0 }}
+              exit={{ opacity: 0, scale: 0.9, y: 20 }}
+              className="bg-white w-full max-w-4xl max-h-[90vh] overflow-y-auto rounded-[3rem] shadow-2xl relative border border-brand-maroon/5 no-scrollbar"
+              onClick={(e) => e.stopPropagation()}
+            >
+              <button 
+                onClick={closeTrackingModal}
+                className="absolute top-6 right-6 p-2 bg-white/20 hover:bg-white/40 backdrop-blur-md rounded-full text-brand-beige hover:text-white transition-colors z-10"
+              >
+                <X className="h-6 w-6" />
+              </button>
+
+              {/* Status Header */}
+              <div className="bg-brand-maroon p-12 text-center text-brand-beige relative overflow-hidden">
+                 <div className="absolute top-0 left-0 w-full h-full bg-[url('/noise.png')] opacity-10 mix-blend-overlay"></div>
+                <h3 className="text-xs font-bold uppercase tracking-[0.3em] mb-4 opacity-70 relative z-10">Current Status</h3>
+                <div className="flex items-center justify-center space-x-4 relative z-10">
+                  <div className="p-4 bg-white/10 rounded-3xl backdrop-blur-md">
+                    {selectedOrder.status === "delivered" ? <CheckCircle2 className="h-10 w-10 text-brand-pink" /> : 
+                     selectedOrder.status === "shipped" ? <Truck className="h-10 w-10 text-brand-pink" /> : 
+                     <Package className="h-10 w-10 text-brand-pink" />}
+                  </div>
+                  <h2 className="text-4xl font-bold capitalize">{selectedOrder.status}</h2>
+                </div>
+              </div>
+
+              {/* Progress Steps */}
+              <div className="p-12 md:p-20">
+                <div className="relative">
+                  {/* Progress Line */}
+                  <div className="absolute top-8 left-0 right-0 h-1 bg-brand-pink/20">
+                    <motion.div 
+                      initial={{ width: 0 }}
+                      animate={{ width: `${(currentStepIndex / 3) * 100}%` }}
+                      className="h-full bg-brand-maroon transition-all duration-1000"
+                    />
+                  </div>
+
+                  <div className="relative flex justify-between">
+                    {statusSteps.map((step, idx) => {
+                      const isCompleted = idx <= currentStepIndex;
+                      const isCurrent = idx === currentStepIndex;
+                      
+                      return (
+                        <div key={step.id} className="flex flex-col items-center group">
+                          <div className={cn(
+                            "h-16 w-16 rounded-2xl flex items-center justify-center transition-all duration-500 shadow-xl relative z-10",
+                            isCompleted ? "bg-brand-maroon text-brand-beige scale-110" : "bg-white text-brand-maroon/20 border-2 border-brand-pink/20"
+                          )}>
+                            <step.icon className={cn("h-7 w-7", isCurrent && "animate-pulse")} />
+                          </div>
+                          <div className="mt-4 text-center">
+                            <span className={cn(
+                              "text-sm font-bold block",
+                              isCompleted ? "text-brand-maroon" : "text-brand-maroon/20"
+                            )}>{step.label}</span>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Order Summary */}
+                <div className="mt-20 pt-10 border-t border-brand-maroon/5 grid grid-cols-1 md:grid-cols-2 gap-12">
+                  <div className="space-y-6">
+                    <h4 className="flex items-center text-xs font-bold uppercase tracking-widest text-brand-maroon/40">
+                      <Box className="h-4 w-4 mr-2" />
+                      Ordered Items
+                    </h4>
+                    <div className="space-y-4">
+                      {selectedOrder.items.map((item, idx) => (
+                        <div key={idx} className="flex items-center space-x-4">
+                          <div className="h-16 w-16 rounded-2xl overflow-hidden bg-brand-pink/10 shrink-0 border border-brand-maroon/5 relative">
+                            <Image src={item.image} alt={item.name} fill className="object-cover" />
+                          </div>
+                          <div>
+                            <p className="font-bold text-brand-maroon text-sm leading-tight">{item.name}</p>
+                            <p className="text-xs text-brand-maroon/40 font-bold mt-1 uppercase tracking-tighter">{item.quantity} units</p>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="space-y-6">
+                    <h4 className="flex items-center text-xs font-bold uppercase tracking-widest text-brand-maroon/40">
+                      <MapPin className="h-4 w-4 mr-2" />
+                      Delivery Details
+                    </h4>
+                    <div className="bg-brand-pink/10 p-6 rounded-4xl border border-brand-maroon/5">
+                      <p className="text-brand-maroon text-sm font-bold mb-1">
+                        Shipping for {selectedOrder.userName || "Valued Customer"}
+                      </p>
+                      <p className="text-brand-maroon/60 text-sm font-medium">
+                        Location: {selectedOrder.shippingAddress?.city || "Handled with care"}
+                      </p>
+                      <div className="mt-6 pt-4 border-t border-brand-maroon/5 flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <span className="text-xs font-bold text-brand-maroon/40 uppercase tracking-widest">Total Paid</span>
+                        <div className="flex flex-col sm:flex-row items-center gap-4">
+                          <span className="text-2xl font-bold text-brand-maroon">৳{selectedOrder.total}</span>
+                          <button 
+                            onClick={() => downloadInvoice(selectedOrder.shortOrderId)}
+                            className="bg-brand-maroon text-white font-bold py-2 px-6 rounded-xl text-xs hover:bg-brand-maroon/90 shadow-md transition-all whitespace-nowrap flex items-center gap-2"
+                          >
+                            <Download className="h-4 w-4" />
+                            <span>Invoice</span>
+                          </button>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </>
   );
 }

@@ -16,6 +16,18 @@ export default function SettingsPage() {
   const [updateLoading, setUpdateLoading] = useState(false);
   const { success, error: toastError } = useToast();
 
+  // Password section state
+  const [showPasswordSection, setShowPasswordSection] = useState(false);
+  const [currentPassword, setCurrentPassword] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [passwordLoading, setPasswordLoading] = useState(false);
+
+  // Notifications section state
+  const [showNotificationSection, setShowNotificationSection] = useState(false);
+  const [emailNotifications, setEmailNotifications] = useState(true);
+  const [notificationLoading, setNotificationLoading] = useState(false);
+
   useEffect(() => {
     if (status === "unauthenticated") {
       router.push("/login?callbackUrl=/dashboard/settings");
@@ -43,8 +55,61 @@ export default function SettingsPage() {
     } catch (error) {
        console.error("Update failed", error);
        toastError("Failed to update profile");
+     } finally {
+        setUpdateLoading(false);
+     }
+   };
+
+  const handleChangePassword = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (newPassword !== confirmPassword) {
+      toastError("Passwords do not match");
+      return;
+    }
+    setPasswordLoading(true);
+    try {
+      const res = await fetch("/api/users/password", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ currentPassword, newPassword }),
+      });
+      if (res.ok) {
+        success("Password changed successfully!");
+        setCurrentPassword("");
+        setNewPassword("");
+        setConfirmPassword("");
+        setShowPasswordSection(false);
+      } else {
+        throw new Error("Failed to change password");
+      }
+    } catch (error) {
+      console.error("Password change failed", error);
+      toastError("Failed to change password");
     } finally {
-       setUpdateLoading(false);
+      setPasswordLoading(false);
+    }
+  };
+
+  const handleSaveNotifications = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setNotificationLoading(true);
+    try {
+      const res = await fetch("/api/users/notifications", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ emailNotifications }),
+      });
+      if (res.ok) {
+        success("Notification preferences saved!");
+        setShowNotificationSection(false);
+      } else {
+        throw new Error("Failed to save preferences");
+      }
+    } catch (error) {
+      console.error("Save notifications failed", error);
+      toastError("Failed to save notification preferences");
+    } finally {
+      setNotificationLoading(false);
     }
   };
 
@@ -129,10 +194,59 @@ export default function SettingsPage() {
                     <h3 className="font-bold text-brand-maroon">Password & Security</h3>
                     <p className="text-sm text-brand-maroon/60">Manage your password and security settings</p>
                   </div>
-                  <button className="px-4 py-2 bg-white text-brand-maroon font-bold rounded-xl hover:bg-brand-pink transition-all">
-                    Manage
+                  <button
+                    onClick={() => setShowPasswordSection(!showPasswordSection)}
+                    className="px-4 py-2 bg-white text-brand-maroon font-bold rounded-xl hover:bg-brand-pink transition-all"
+                  >
+                    {showPasswordSection ? "Close" : "Manage"}
                   </button>
                 </div>
+
+                {showPasswordSection && (
+                  <form onSubmit={handleChangePassword} className="space-y-4 p-4 border-t border-brand-maroon/10">
+                    <div>
+                      <label className="text-sm font-bold text-brand-maroon mb-2 block">Current Password</label>
+                      <input
+                        type="password"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        className="w-full p-4 rounded-xl border border-brand-maroon/10 focus:border-brand-maroon outline-none transition-all"
+                        placeholder="Enter your current password"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-bold text-brand-maroon mb-2 block">New Password</label>
+                      <input
+                        type="password"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                        className="w-full p-4 rounded-xl border border-brand-maroon/10 focus:border-brand-maroon outline-none transition-all"
+                        placeholder="Enter your new password"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="text-sm font-bold text-brand-maroon mb-2 block">Confirm New Password</label>
+                      <input
+                        type="password"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="w-full p-4 rounded-xl border border-brand-maroon/10 focus:border-brand-maroon outline-none transition-all"
+                        placeholder="Confirm your new password"
+                      />
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={passwordLoading || !currentPassword || !newPassword || !confirmPassword}
+                      className="w-full px-8 py-4 bg-brand-maroon text-white font-bold rounded-2xl hover:bg-brand-maroon/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {passwordLoading && <Loader2 className="h-5 w-5 animate-spin" />}
+                      Change Password
+                    </button>
+                  </form>
+                )}
 
                 <div className="flex items-center gap-4 p-4 bg-brand-pink/5 rounded-xl">
                   <Bell className="h-6 w-6 text-brand-maroon" />
@@ -140,10 +254,40 @@ export default function SettingsPage() {
                     <h3 className="font-bold text-brand-maroon">Notifications</h3>
                     <p className="text-sm text-brand-maroon/60">Manage email and push notifications</p>
                   </div>
-                  <button className="px-4 py-2 bg-white text-brand-maroon font-bold rounded-xl hover:bg-brand-pink transition-all">
-                    Configure
+                  <button
+                    onClick={() => setShowNotificationSection(!showNotificationSection)}
+                    className="px-4 py-2 bg-white text-brand-maroon font-bold rounded-xl hover:bg-brand-pink transition-all"
+                  >
+                    {showNotificationSection ? "Close" : "Configure"}
                   </button>
                 </div>
+
+                {showNotificationSection && (
+                  <form onSubmit={handleSaveNotifications} className="space-y-4 p-4 border-t border-brand-maroon/10">
+                    <div className="flex items-center justify-between">
+                      <div>
+                        <h4 className="font-bold text-brand-maroon">Email Notifications</h4>
+                        <p className="text-sm text-brand-maroon/60">Receive updates and alerts via email</p>
+                      </div>
+                      <button
+                        type="button"
+                        onClick={() => setEmailNotifications(!emailNotifications)}
+                        className={`w-12 h-6 rounded-full transition-all relative ${emailNotifications ? "bg-brand-maroon" : "bg-brand-maroon/20"}`}
+                      >
+                        <span className={`absolute top-1 w-4 h-4 bg-white rounded-full transition-all ${emailNotifications ? "left-7" : "left-1"}`} />
+                      </button>
+                    </div>
+
+                    <button
+                      type="submit"
+                      disabled={notificationLoading}
+                      className="w-full px-8 py-4 bg-brand-maroon text-white font-bold rounded-2xl hover:bg-brand-maroon/90 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                    >
+                      {notificationLoading && <Loader2 className="h-5 w-5 animate-spin" />}
+                      Save Preferences
+                    </button>
+                  </form>
+                )}
               </div>
 
               {/* Danger Zone */}
