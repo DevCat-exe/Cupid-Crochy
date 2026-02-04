@@ -1,30 +1,70 @@
-# React + TypeScript + Vite
+# Cupid Crochy 🧶
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+> A premium e-commerce platform for handmade crochet treasures.
 
-Currently, two official plugins are available:
+![Next.js](https://img.shields.io/badge/Next.js-16.1.1-black?style=for-the-badge&logo=next.js)
+![MongoDB](https://img.shields.io/badge/MongoDB-6.21.0-47A248?style=for-the-badge&logo=mongodb)
+![Stripe](https://img.shields.io/badge/Stripe-20.1.0-635BFF?style=for-the-badge&logo=stripe)
+![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=for-the-badge&logo=typescript)
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+## 📖 Documentation
 
-## Expanding the ESLint configuration
+The detailed documentation for this project has been organized into the `docs/` folder to keep this README clean.
 
-If you are developing a production application, we recommend updating the configuration to enable type aware lint rules:
+- **[Full Documentation](./docs/full_documentation.md)**: Comprehensive guide on features, architecture, API endpoints, and user roles.
+- **[Project Status](./docs/project_status.md)**: Current development milestones and checklist.
 
-- Configure the top-level `parserOptions` property like this:
+## 🚀 Quick Start
 
-```js
-export default {
-  // other rules...
-  parserOptions: {
-    ecmaVersion: 'latest',
-    sourceType: 'module',
-    project: ['./tsconfig.json', './tsconfig.node.json'],
-    tsconfigRootDir: __dirname,
-  },
-}
-```
+### Prerequisites
 
-- Replace `plugin:@typescript-eslint/recommended` to `plugin:@typescript-eslint/recommended-type-checked` or `plugin:@typescript-eslint/strict-type-checked`
-- Optionally add `plugin:@typescript-eslint/stylistic-type-checked`
-- Install [eslint-plugin-react](https://github.com/jsx-eslint/eslint-plugin-react) and add `plugin:react/recommended` & `plugin:react/jsx-runtime` to the `extends` list
+- Node.js 18+
+- MongoDB (Atlas or Local)
+- Stripe Account
+- Resend Account (Email)
+
+### Installation
+
+1.  **Clone & Install**
+
+    ```bash
+    git clone <your-repo-url>
+    cd cupid-crochy
+    npm install
+    ```
+
+2.  **Environment Setup**
+    Create a `.env.local` file (see `.env.example` if available, or check docs).
+
+3.  **Seed Database**
+
+    ```bash
+    npm run seed
+    ```
+
+    _Creates Admin, Staff, Products, and Coupons._
+
+4.  **Run Development Server**
+
+    ```bash
+    npm run dev
+    ```
+
+    Visit [http://localhost:3000](http://localhost:3000).
+
+5.  **Stripe Webhook (Local)**
+    ```bash
+    stripe listen --forward-to localhost:3000/api/webhook/stripe
+    ```
+
+## 🔑 Default Credentials
+
+| Role      | Email                       | Password   |
+| :-------- | :-------------------------- | :--------- |
+| **Admin** | `admin@cupidcrochy.com`     | `admin123` |
+| **Staff** | `staff@cupidcrochy.com`     | `staff123` |
+| **User**  | `sarah.johnson@example.com` | `user123`  |
+
+---
+
+_Handcrafted with ❤️ by Cupid Crochy Team_
