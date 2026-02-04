@@ -46,7 +46,7 @@ export default function CheckoutSuccessPage() {
             </Link>
             
             <Link
-              href="/order-tracking"
+              href="/dashboard"
               className="w-full text-brand-maroon font-bold py-3 hover:underline flex items-center justify-center group"
             >
               Track Your Order

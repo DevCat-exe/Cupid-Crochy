@@ -200,7 +200,7 @@ export async function POST(req: Request) {
                 }
                 
                 .logo {
-                  font-family: 'Cookie', 'Brush Script MT', 'Dancing Script', 'Garamond', serif;
+                  font-family: 'Cookie', 'Brush Script MT', 'Segoe Script', 'Gabriola', cursive;
                   font-size: 48px;
                   color: #F5DDEB;
                   text-decoration: none;
